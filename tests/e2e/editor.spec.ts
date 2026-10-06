@@ -199,3 +199,67 @@ test('depth: refine all walls with the real AI runtime (stand-in model), tune st
   expect(exported.facades.front?.relief?.depthM).toBe(1.5);
   expect(exported.facades.right?.relief?.depthM).toBe(0.8);
 });
+
+test('shape: an L template, a dragged corner, a podium block, resize, export', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'the editor is a desktop tool');
+  page.on('dialog', (d) => void d.accept());
+  await page.goto('editor/index.html');
+  const editor = page.locator('abb360-editor');
+  await editor.getByRole('button', { name: 'Load demo' }).click();
+  await expect(status(page)).toContainText('Loaded the demo building');
+  await step(page, 'Shape');
+  const view = page.locator('abb360-shape-view');
+  // The demo's own shape: one notched block, its photos laid round the plan.
+  await expect(view.locator('polygon')).toHaveCount(1);
+  await expect(view.locator('image')).toHaveCount(4);
+
+  await editor.getByRole('button', { name: 'L', exact: true }).click();
+  await expect(status(page)).toContainText('Template applied');
+  const corners = view.locator('circle.corner');
+  await expect(corners).toHaveCount(6);
+
+  // Drag the inner corner (x = W/2, d = D/2) a little towards the front-right.
+  const inner = await corners.nth(3).boundingBox();
+  if (!inner) throw new Error('no corner');
+  const cx = inner.x + inner.width / 2;
+  const cy = inner.y + inner.height / 2;
+  await page.mouse.move(cx, cy);
+  await page.mouse.down();
+  await page.mouse.move(cx + 30, cy + 20, { steps: 5 });
+  await page.mouse.up();
+  await expect(editor.locator('#corner-x')).not.toHaveValue('14.7');
+  const movedX = Number(await editor.locator('#corner-x').inputValue());
+  expect(movedX).toBeGreaterThan(14.7);
+
+  // Type an exact depth for that corner.
+  await editor.locator('#corner-d').fill('9');
+  await editor.locator('#corner-d').dispatchEvent('change');
+
+  // A tower on the L: a second block, 30 m tall.
+  await editor.getByRole('button', { name: 'Add block' }).click();
+  await expect(view.locator('polygon')).toHaveCount(2);
+  await editor.locator('#block-height').fill('30');
+  await editor.locator('#block-height').dispatchEvent('change');
+
+  // Doubling the width stretches the shape with it.
+  await step(page, 'Size');
+  const width = editor.getByLabel('Width, front and back (m)');
+  const w0 = Number(await width.inputValue());
+  await width.fill(String(w0 * 2));
+  await width.dispatchEvent('change');
+
+  const downloadPromise = page.waitForEvent('download');
+  await editor.getByRole('button', { name: 'Export JSON' }).click();
+  const exported = JSON.parse(await readFile((await (await downloadPromise).path()) as string, 'utf8')) as {
+    dimensions: { width: number; depth: number; height: number };
+    massing?: { blocks: { polygon: [number, number][]; height: number }[] };
+  };
+  const blocks = exported.massing?.blocks ?? [];
+  expect(blocks).toHaveLength(2);
+  expect(blocks[0]?.polygon).toHaveLength(6);
+  const corner = blocks[0]?.polygon[3] as [number, number];
+  expect(corner[0]).toBeCloseTo(movedX * 2, 1);
+  expect(corner[1]).toBe(9);
+  expect(blocks[1]?.height).toBe(30);
+  expect(Math.max(...(blocks[0]?.polygon.map((p) => p[0]) ?? []))).toBeCloseTo(exported.dimensions.width, 1);
+});

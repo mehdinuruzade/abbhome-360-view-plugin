@@ -80,7 +80,7 @@ export class ApartmentTable extends LitElement {
   }
 
   protected override render() {
-    if (this.apartments.length === 0) return html`<p class="empty">No apartments yet. Create them in step 7.</p>`;
+    if (this.apartments.length === 0) return html`<p class="empty">No apartments yet. Create them in step 8.</p>`;
     const rows = [...this.apartments].sort((a, b) => b.floor - a.floor || a.number.localeCompare(b.number, undefined, { numeric: true }));
     return html`
       <div class="scroll">

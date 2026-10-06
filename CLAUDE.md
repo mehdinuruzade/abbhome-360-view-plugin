@@ -27,6 +27,7 @@ the committed `public/demo/building.json`).
 - **Shapes** (`src/core/massing.ts`): blocks → walls; every wall shows the elevation it faces,
   projected straight onto it, so photos, regions, the grid and relief stay in facade space. Configs
   without `massing` must render exactly as the old box (tests compare with `facade-frame.ts`).
+  The editor's shape model is `src/editor/shape.ts` (pure, tested); its top view is `shape-view.ts`.
 - **Regions are derived** in the editor from the `editor` block (floor lines × dividers);
   change the grid model in `src/editor/state.ts`, which the demo generator also uses.
 - **The widget lives in other people's pages:** no global CSS, no wheel or touch-scroll hijacking,

@@ -187,13 +187,19 @@ Open `editor/index.html` (or the deployed site's `editor/`). Your work autosaves
    wall's corners afterwards, add its depth again.
 4. **Size.** Enter the height; **Measure** derives width and depth from the photos and warns when
    opposite walls disagree by more than 5 % (usually a misplaced corner).
-5. **Floors.** Set the number of floors, **Space evenly**, then drag each line onto its slab. The
+5. **Shape.** The building from above, front at the bottom, with each straightened photo laid along
+   its side so the wall edges you see line up with the plan. Pick a template (Rectangle, L, U, T,
+   Notched) and drag the corners onto those edges: they snap to 10 cm and square up with their
+   neighbours (Alt places freely). Drag a + on an edge to add a corner; Delete removes the selected
+   one; or type its position. **Add block** makes a second part with its own height (a tower on a
+   podium, a lower wing). Rectangle goes back to the plain box. Changing the size stretches the shape.
+6. **Floors.** Set the number of floors, **Space evenly**, then drag each line onto its slab. The
    lines are shared by all four walls, so check each wall.
-6. **Columns.** Click a wall to split it where apartments meet; drag or remove dividers.
-7. **Apartments.** Click the columns of one stack (for a corner apartment, also the column on the
+7. **Columns.** Click a wall to split it where apartments meet; drag or remove dividers.
+8. **Apartments.** Click the columns of one stack (for a corner apartment, also the column on the
    next wall), choose the floors, **Create**. Numbers follow the pattern (`{floor}{nn}` → 1203).
    Click an apartment to delete it or its whole stack.
-8. **Details.** Rooms, area, price, status and plan image per apartment.
+9. **Details.** Rooms, area, price, status and plan image per apartment.
 
 **Export JSON** downloads `building.json` (depth maps are embedded in it). Upload it with the
 photos (same names, same folder).

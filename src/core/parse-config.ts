@@ -1,3 +1,4 @@
+import { selfIntersects } from './geometry2d';
 import { squareToQuad } from './homography';
 import {
   FACADES,
@@ -110,27 +111,6 @@ function parseDimensions(raw: unknown): Dimensions {
     throw new ConfigError('dimensions need positive width, depth and height in metres');
   }
   return { ...o, width, depth, height };
-}
-
-/** Proper crossing of segments p1–p2 and q1–q2 (touching at an end doesn't count). */
-function segmentsCross(p1: Vec2, p2: Vec2, q1: Vec2, q2: Vec2): boolean {
-  const orient = (a: Vec2, b: Vec2, c: Vec2) => (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
-  const d1 = orient(q1, q2, p1);
-  const d2 = orient(q1, q2, p2);
-  const d3 = orient(p1, p2, q1);
-  const d4 = orient(p1, p2, q2);
-  return ((d1 > 1e-9 && d2 < -1e-9) || (d1 < -1e-9 && d2 > 1e-9)) && ((d3 > 1e-9 && d4 < -1e-9) || (d3 < -1e-9 && d4 > 1e-9));
-}
-
-function selfIntersects(poly: readonly Vec2[]): boolean {
-  const n = poly.length;
-  for (let i = 0; i < n; i++) {
-    for (let j = i + 2; j < n; j++) {
-      if (i === 0 && j === n - 1) continue; // neighbours through the closing edge
-      if (segmentsCross(poly[i] as Vec2, poly[(i + 1) % n] as Vec2, poly[j] as Vec2, poly[(j + 1) % n] as Vec2)) return true;
-    }
-  }
-  return false;
 }
 
 function parseBlock(raw: unknown, i: number, d: Dimensions, warnings: string[]): MassingBlock | null {

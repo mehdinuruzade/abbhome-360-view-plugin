@@ -1,8 +1,9 @@
 import { LitElement, css, html, nothing, type PropertyValues } from 'lit';
+import { live } from 'lit/directives/live.js';
 import { deriveDimensions, quadAspect, type DimensionWarning } from '../core/dimensions';
 import { facadeWidth } from '../core/facade-frame';
 import { fullImageCorners, resolveUrl } from '../core/parse-config';
-import { FACADES, type BuildingConfig, type Corners, type FacadeId, type Relief, type UnitCell } from '../core/types';
+import { FACADES, type BuildingConfig, type Corners, type Dimensions, type FacadeId, type Massing, type Relief, type UnitCell } from '../core/types';
 import { BuildingScene } from '../scene/building-scene';
 import '../widget/index';
 import './apartment-table';
@@ -23,7 +24,21 @@ import {
   type EditorDocument,
   type ImageRef,
 } from './io';
-import { loadImage } from './rectify';
+import { loadImage, rectify } from './rectify';
+import {
+  SHAPE_TEMPLATES,
+  addBlock,
+  removeBlock,
+  removeVertex,
+  resize,
+  setBlockHeight,
+  setTemplate,
+  shapeBlocks,
+  moveVertex,
+  type ShapeTemplate,
+} from './shape';
+import './shape-view';
+import type { ShapeChangeDetail, ShapeSelection } from './shape-view';
 import {
   addDivider,
   createUnits,
@@ -39,13 +54,14 @@ import {
   type WithEditor,
 } from './state';
 
-type Step = 'photos' | 'corners' | 'depth' | 'size' | 'floors' | 'columns' | 'apartments' | 'details';
+type Step = 'photos' | 'corners' | 'depth' | 'size' | 'shape' | 'floors' | 'columns' | 'apartments' | 'details';
 
 const STEPS: { id: Step; label: string }[] = [
   { id: 'photos', label: 'Photos' },
   { id: 'corners', label: 'Corners' },
   { id: 'depth', label: 'Depth' },
   { id: 'size', label: 'Size' },
+  { id: 'shape', label: 'Shape' },
   { id: 'floors', label: 'Floors' },
   { id: 'columns', label: 'Columns' },
   { id: 'apartments', label: 'Apartments' },
@@ -99,6 +115,8 @@ export class AbbEditor extends LitElement {
     _buyerPreview: { state: true },
     _depthBusy: { state: true },
     _smoothing: { state: true },
+    _shapeSelection: { state: true },
+    _shapePhotos: { state: true },
   };
 
   declare protected _doc: EditorDocument;
@@ -115,12 +133,16 @@ export class AbbEditor extends LitElement {
   declare protected _buyerPreview: boolean;
   declare protected _depthBusy: boolean;
   declare protected _smoothing: number;
+  declare protected _shapeSelection: ShapeSelection | null;
+  /** Straightened photos for the Shape step's top view. */
+  declare protected _shapePhotos: Partial<Record<FacadeId, string | null>>;
 
   private scene: BuildingScene | null = null;
   /** What each wall's relief was made from, kept so smoothing can change without starting over. */
   private rawDepth: Partial<Record<FacadeId, RawRelief>> = {};
   private previewFrame = 0;
   private saveTimer = 0;
+  private shapePhotoKeys: Partial<Record<FacadeId, string>> = {};
 
   constructor() {
     super();
@@ -139,6 +161,8 @@ export class AbbEditor extends LitElement {
     this._buyerPreview = false;
     this._depthBusy = false;
     this._smoothing = 1;
+    this._shapeSelection = null;
+    this._shapePhotos = {};
     this.resetLevelRange();
   }
 
@@ -194,6 +218,7 @@ export class AbbEditor extends LitElement {
   }
 
   protected override updated(changed: PropertyValues): void {
+    if (this._step === 'shape' && (changed.has('_step') || changed.has('_doc'))) void this.refreshShapePhotos();
     if (changed.has('_doc')) {
       this.schedulePreview();
       window.clearTimeout(this.saveTimer);
@@ -331,7 +356,7 @@ export class AbbEditor extends LitElement {
     if (url) void this.useImage(f, url, new URL(url, document.baseURI).href);
   }
 
-  // ── Steps 2–3: corners and size ──────────────────────────────────────────────────────────
+  // ── Steps 2 and 4: corners and size ──────────────────────────────────────────────────────
 
   private onCorners(f: FacadeId, e: CustomEvent<CornersChangeDetail>) {
     const { corners, final, valid } = e.detail;
@@ -370,17 +395,19 @@ export class AbbEditor extends LitElement {
     }
     const { dimensions, warnings } = deriveDimensions(height, aspects);
     this._warnings = warnings;
-    this.setConfig({
-      ...this.config,
-      dimensions: { width: round2(dimensions.width), depth: round2(dimensions.depth), height: round2(height) },
-    });
+    this.setDimensions({ width: round2(dimensions.width), depth: round2(dimensions.depth), height: round2(height) });
     this._message = `Measured from the photos: ${round2(dimensions.width)} × ${round2(dimensions.depth)} × ${round2(height)} m.`;
   }
 
   private setDimension(key: 'width' | 'depth' | 'height', e: Event) {
     const value = Number((e.target as HTMLInputElement).value);
     if (!Number.isFinite(value) || value <= 0) return;
-    this.setConfig({ ...this.config, dimensions: { ...this.config.dimensions, [key]: value } });
+    this.setDimensions({ ...this.config.dimensions, [key]: value });
+  }
+
+  /** A new size; the shape (step 5) stretches with it. */
+  private setDimensions(dimensions: Dimensions) {
+    this.setConfig(resize(this.config, { ...this.config.dimensions, ...dimensions }));
   }
 
   private heightFromFloors() {
@@ -476,7 +503,92 @@ export class AbbEditor extends LitElement {
     }
   }
 
-  // ── Steps 4–6: floors, columns, apartments ───────────────────────────────────────────────
+  // ── Step 5: shape ─────────────────────────────────────────────────────────────────────────
+
+  /** Straightens the photos for the top view, redoing only those whose photo or corners changed. */
+  private async refreshShapePhotos() {
+    for (const f of FACADES) {
+      const src = this._doc.images[f].src;
+      const key = src ? `${src}|${JSON.stringify(this.config.facades[f].corners)}` : '';
+      if (this.shapePhotoKeys[f] === key) continue;
+      this.shapePhotoKeys[f] = key;
+      let url: string | null = null;
+      if (src) {
+        try {
+          url = rectify(await loadImage(src), this.config.facades[f].corners, 640, 240).toDataURL('image/jpeg', 0.8);
+        } catch {
+          url = null; // a photo from another site without CORS: the top view shows a blank band
+        }
+      }
+      if (this.shapePhotoKeys[f] === key) this._shapePhotos = { ...this._shapePhotos, [f]: url };
+    }
+  }
+
+  private setMassing(massing: Massing | undefined) {
+    const { massing: _old, ...rest } = this.config;
+    this.setConfig(massing ? { ...rest, massing } : (rest as typeof this.config));
+  }
+
+  private applyTemplate(kind: ShapeTemplate) {
+    if (this.config.massing && !confirm('Replace the current shape with this template?')) return;
+    this.setConfig(setTemplate(this.config, kind));
+    this._shapeSelection = { block: 0, vertex: null };
+    this._message =
+      kind === 'rectangle'
+        ? 'The building is a plain box again.'
+        : 'Template applied. Drag its corners onto the walls you see in the photos around the plan.';
+  }
+
+  /** The shape being edited; the box becomes an editable block the first time. */
+  private editableMassing(): Massing {
+    return { ...this.config.massing, blocks: shapeBlocks(this.config) };
+  }
+
+  private onShapeChange(e: CustomEvent<ShapeChangeDetail>) {
+    this.setMassing(e.detail.massing);
+  }
+
+  private setBlockHeightFrom(block: number, e: Event) {
+    const height = Number((e.target as HTMLInputElement).value);
+    if (!Number.isFinite(height) || height <= 0) return;
+    this.setMassing(setBlockHeight(this.editableMassing(), block, height, this.config.dimensions));
+  }
+
+  private setCornerFrom(block: number, vertex: number, axis: 0 | 1, e: Event) {
+    const value = Number((e.target as HTMLInputElement).value);
+    const p = this.editableMassing().blocks[block]?.polygon[vertex];
+    if (!p || !Number.isFinite(value)) return;
+    const next = moveVertex(this.editableMassing(), block, vertex, axis === 0 ? [value, p[1]] : [p[0], value], this.config.dimensions);
+    if (next) this.setMassing(next);
+    else {
+      this._message = "That would make the outline cross itself, so the corner didn't move.";
+      this.requestUpdate(); // live() puts the stored value back in the field
+    }
+  }
+
+  private removeCorner(block: number, vertex: number) {
+    const next = removeVertex(this.editableMassing(), block, vertex);
+    if (!next) {
+      this._message = 'A block needs at least three corners, and its outline can\'t cross itself.';
+      return;
+    }
+    this.setMassing(next);
+    this._shapeSelection = { block, vertex: null };
+  }
+
+  private addShapeBlock() {
+    const massing = addBlock(this.config);
+    this.setMassing(massing);
+    this._shapeSelection = { block: massing.blocks.length - 1, vertex: null };
+    this._message = 'Block added in the middle. Move its corners and set its height: a tower on a podium, a lower wing…';
+  }
+
+  private removeShapeBlock(block: number) {
+    this.setMassing(removeBlock(this.editableMassing(), block));
+    this._shapeSelection = null;
+  }
+
+  // ── Steps 6–8: floors, columns, apartments ───────────────────────────────────────────────
 
   private spreadFloors() {
     const count = Number((this.renderRoot.querySelector('#band-count') as HTMLInputElement | null)?.value);
@@ -635,6 +747,8 @@ export class AbbEditor extends LitElement {
         return this.renderDepth();
       case 'size':
         return this.renderSize();
+      case 'shape':
+        return this.renderShape();
       case 'floors':
       case 'columns':
       case 'apartments':
@@ -762,6 +876,53 @@ export class AbbEditor extends LitElement {
     `;
   }
 
+  private renderShape() {
+    const d = this.config.dimensions;
+    const blocks = shapeBlocks(this.config);
+    const sel = this._shapeSelection;
+    const block = sel ? blocks[sel.block] : undefined;
+    const corner = sel && block && sel.vertex !== null ? block.polygon[sel.vertex] : undefined;
+    return html`
+      <h2>5. Shape</h2>
+      <p class="help">
+        The building seen from above, front at the bottom, with each straightened photo along its side. Start from a template,
+        then drag the corners onto the wall edges you see in the photos. Drag a + on an edge to add a corner; select a corner and
+        press Delete to remove it. Corners snap to 10 cm and square up with their neighbours (hold Alt to place freely).
+        For a tower on a podium or a lower wing, add a block and set its height.
+      </p>
+      <div class="inline-form" role="group" aria-label="Templates">
+        ${SHAPE_TEMPLATES.map((t) => html`<button type="button" @click=${() => this.applyTemplate(t.id)}>${t.label}</button>`)}
+        <button type="button" @click=${this.addShapeBlock}>Add block</button>
+      </div>
+      <abb360-shape-view
+        .dimensions=${d}
+        .blocks=${blocks}
+        .photos=${this._shapePhotos}
+        .selection=${sel}
+        @shape-change=${this.onShapeChange}
+        @shape-select=${(e: CustomEvent<ShapeSelection | null>) => (this._shapeSelection = e.detail)}
+      ></abb360-shape-view>
+      ${sel && block
+        ? html`<div class="inline-form">
+            <strong>Block ${sel.block + 1}</strong>
+            <label>Height (m)<input id="block-height" type="number" min="1" max=${d.height} step="0.1" .value=${live(String(block.height))}
+              @change=${(e: Event) => this.setBlockHeightFrom(sel.block, e)} /></label>
+            ${blocks.length > 1 ? html`<button type="button" @click=${() => this.removeShapeBlock(sel.block)}>Remove block</button>` : nothing}
+          </div>`
+        : html`<p class="help">Click a block to change its height; click a corner to type its position.</p>`}
+      ${sel && corner && sel.vertex !== null
+        ? html`<div class="inline-form">
+            <strong>Corner ${sel.vertex + 1}</strong>
+            <label>x, from the left (m)<input id="corner-x" type="number" min="0" max=${d.width} step="0.1" .value=${live(String(corner[0]))}
+              @change=${(e: Event) => this.setCornerFrom(sel.block, sel.vertex as number, 0, e)} /></label>
+            <label>d, from the front (m)<input id="corner-d" type="number" min="0" max=${d.depth} step="0.1" .value=${live(String(corner[1]))}
+              @change=${(e: Event) => this.setCornerFrom(sel.block, sel.vertex as number, 1, e)} /></label>
+            <button type="button" @click=${() => this.removeCorner(sel.block, sel.vertex as number)}>Remove corner</button>
+          </div>`
+        : nothing}
+    `;
+  }
+
   private renderGrid(mode: 'floors' | 'columns' | 'apartments') {
     const f = this._facade;
     const e = this.config.editor;
@@ -775,7 +936,7 @@ export class AbbEditor extends LitElement {
         'Click the columns of one stack (for a corner apartment, also the column on the next wall), pick the floors, then create. Click an existing apartment to delete it.',
     }[mode];
     return html`
-      <h2>${{ floors: '5. Floors', columns: '6. Columns', apartments: '7. Apartments' }[mode]}</h2>
+      <h2>${{ floors: '6. Floors', columns: '7. Columns', apartments: '8. Apartments' }[mode]}</h2>
       <p class="help">${help}</p>
       ${mode === 'floors'
         ? html`<div class="inline-form">
@@ -836,7 +997,7 @@ export class AbbEditor extends LitElement {
 
   private renderDetails() {
     return html`
-      <h2>8. Apartment details</h2>
+      <h2>9. Apartment details</h2>
       <p class="help">Rooms, area, price and status for each apartment. The host site can also push live status and prices to the widget.</p>
       <abb360-apartment-table
         .apartments=${this.config.apartments}
