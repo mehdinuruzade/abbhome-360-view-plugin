@@ -1,8 +1,8 @@
 # Building 360 plugin
 
 Four straight-on photos of a residential building become an orbitable 3D building, lit by a
-sun that casts real shadows, with optional depth estimated from the photos so balconies, slabs
-and recesses stand out. Apartments
+sun that casts real shadows, with depth worked out from the photos so slabs stand out and
+windows sit back. Apartments
 marked on the facades light up in 3D; buyers tap one, see its details, and **Select** it, which
 notifies the page that embeds the widget. That page (ABB Home) takes over from there: listing,
 lead form, mortgage calculator.
@@ -115,7 +115,7 @@ Theme with CSS custom properties on the element: `--abb360-accent`, `--abb360-ac
     "front": {
       "image": "assets/front.webp",                                      // relative to building.json
       "corners": { "tl": [0.2, 0.121], "tr": [0.801, 0.121], "br": [0.801, 0.92], "bl": [0.2, 0.92] },
-      "relief": { "image": "data:image/png;base64,…", "depthM": 0.8 }                  // optional depth, made by the editor
+      "relief": { "image": "data:image/png;base64,…", "depthM": 0.4, "source": "structure" } // optional depth, made by the editor
     },
     "right": { … }, "back": { … }, "left": { … }
   },
@@ -136,7 +136,8 @@ Theme with CSS custom properties on the element: `--abb360-accent`, `--abb360-ac
 - **`regions`:** an apartment's outline on one wall in facade coordinates: u from the wall's left edge to its right, v from the roof line (0) to the ground (1), as seen from outside. A corner apartment has one region on each of its two walls.
 - **`relief`** (optional): a grayscale image in the wall's facade coordinates. 128 is the wall plane,
   white sticks out by `depthM` metres and black goes in by it. The widget pushes the wall surface in
-  and out with it. Widgets without depth support ignore it and show the wall flat.
+  and out with it and shades it as a bump map. `source` says how the editor made it (`structure` or
+  `model`). Widgets without depth support ignore it and show the wall flat.
 - **`status`:** `available`, `reserved` or `sold`. Any other value is kept and shown as unavailable.
 - **`price.amountMinor`:** an integer in the currency's minor unit (qəpik for AZN). Never a float.
 
@@ -167,12 +168,13 @@ Open `editor/index.html` (or the deployed site's `editor/`). Your work autosaves
    best: anything in front of the building (a neighbour's roof, cars, trees) ends up painted on the wall.
 2. **Corners.** Drag the four handles onto the main wall's corners: the roof line and the ground. Use
    the same physical height on every wall so floors meet at the building's corners.
-3. **Depth.** **Estimate all four walls** runs a depth model (Depth Anything V2 Small) in the
-   browser on each straightened photo. The first time it downloads the 27 MB model from Hugging Face;
-   after that the browser has it cached. Lighter sticks out, darker goes in. Tune **Strength** (metres) and
-   **Smoothing** while watching the 3D preview, or **Remove** depth from a wall that looks wrong.
-   Depth from a single photo is approximate: glass reflecting the sky, for instance, can read as
-   deep. If you move a wall's corners afterwards, estimate its depth again.
+3. **Depth.** **Add depth from the photos** works depth out of each straightened photo's structure,
+   instantly and offline: glass and openings sit back, opaque bands between rows of windows (slab
+   edges, balcony fronts) stick out. **Refine with AI** runs a depth model (Depth Anything V2 Small)
+   in the browser instead; the first time it downloads the 27 MB model from Hugging Face. Lighter
+   sticks out, darker goes in. Tune **Strength** (metres) and **Smoothing** while watching the 3D
+   preview, or **Remove** depth from a wall that looks wrong. Both are approximate. If you move a
+   wall's corners afterwards, add its depth again.
 4. **Size.** Enter the height; **Measure** derives width and depth from the photos and warns when
    opposite walls disagree by more than 5 % (usually a misplaced corner).
 5. **Floors.** Set the number of floors, **Space evenly**, then drag each line onto its slab. The
@@ -198,7 +200,7 @@ photos (same names, same folder).
 | `npm run e2e` | Browser tests (Playwright, Chromium, desktop and phone viewports); needs `npm run build` first |
 | `npm run size` | Fails if the IIFE bundle passes 200 kB gzipped |
 | `npm run demo:config` | Rewrites `public/demo/building.json` from `scripts/demo-config.ts` |
-| `npm run demo:depth` | Computes the demo building's depth with the real model (after `npm run build`; needs internet access to huggingface.co and `npx playwright install chromium` once). `DEPTH_MODEL_FILE=model.onnx` uses a local copy |
+| `npm run demo:depth` | Recomputes the demo building's depth from the photos (after `npm run build`; needs Playwright's Chromium). `-- --ai` uses the AI model instead (needs huggingface.co; `DEPTH_MODEL_FILE=model.onnx` uses a local copy) |
 
 ```
 src/core/     config schema, lenient parser, homography, wall frames, geometry, apartments
@@ -212,8 +214,8 @@ tests/e2e/    Playwright tests
 
 ## Limitations of this prototype
 
-- The building is a box whose walls can be pushed in and out by estimated depth; it isn't a measured
-  3D model, and steep depth changes stretch the photo on their sides.
+- The building is a box whose walls are pushed in and out by depth worked out from the photos; it
+  isn't a measured 3D model, and steep depth changes stretch the photo on their sides.
 - English strings only; prices and areas already format for the `locale` you pass.
 - The editor draws apartments as grid cells (floor × column). The config and widget already accept any polygon.
 - No backend, accounts, reservations or spreadsheet import yet.

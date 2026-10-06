@@ -7,7 +7,8 @@
   "facades": {
     "front": {
       "image": "assets/front.webp",
-      "corners": {"tl": [0.20011, 0.121], "tr": [0.80098, 0.121], "br": [0.80098, 0.92], "bl": [0.20011, 0.92]}
+      "corners": {"tl": [0.20011, 0.121], "tr": [0.80098, 0.121], "br": [0.80098, 0.92], "bl": [0.20011, 0.92]},
+      "relief": {"image": "assets/front-relief.png", "depthM": 0.4, "source": "structure"}
     },
     "right": {
       "image": "assets/right.webp",
@@ -16,7 +17,8 @@
         "tr": [0.73048, 0.101],
         "br": [0.73048, 0.9355],
         "bl": [0.24458, 0.9355]
-      }
+      },
+      "relief": {"image": "assets/right-relief.png", "depthM": 0.4, "source": "structure"}
     },
     "back": {
       "image": "assets/back.webp",
@@ -25,7 +27,8 @@
         "tr": [0.79393, 0.1285],
         "br": [0.79393, 0.914],
         "bl": [0.20445, 0.914]
-      }
+      },
+      "relief": {"image": "assets/back-relief.png", "depthM": 0.4, "source": "structure"}
     },
     "left": {
       "image": "assets/left.webp",
@@ -34,7 +37,8 @@
         "tr": [0.75488, 0.1015],
         "br": [0.75488, 0.935],
         "bl": [0.26898, 0.935]
-      }
+      },
+      "relief": {"image": "assets/left-relief.png", "depthM": 0.4, "source": "structure"}
     }
   },
   "apartments": [

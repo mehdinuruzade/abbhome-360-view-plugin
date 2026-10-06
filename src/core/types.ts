@@ -34,6 +34,8 @@ export interface Dimensions {
 export interface Relief {
   image: string;
   depthM: number;
+  /** How the editor made it: 'structure' (from the photo's structure) or 'model' (AI depth). */
+  source?: string;
   [key: string]: unknown;
 }
 

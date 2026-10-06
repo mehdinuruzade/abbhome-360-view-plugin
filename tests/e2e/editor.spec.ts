@@ -135,7 +135,37 @@ test('a new building from four photo files, with the draft restored after a relo
   await expect(page.locator('abb360-apartment-table tbody tr')).toHaveCount(3);
 });
 
-test('depth: estimate all walls with the real runtime (stand-in model), tune strength, export', async ({ page, isMobile }) => {
+test('depth from the photos: all four walls, instantly and offline, then export', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'the editor is a desktop tool');
+  // Nothing may be downloaded for structure depth.
+  await page.route('**/*.onnx', (route) => route.abort());
+  await page.goto('editor/index.html');
+  const editor = page.locator('abb360-editor');
+  await editor.getByRole('button', { name: 'Load demo' }).click();
+  await expect(status(page)).toContainText('Loaded the demo building');
+  await step(page, 'Depth');
+  for (const f of ['Front', 'Right', 'Back', 'Left']) {
+    await editor.getByRole('tab', { name: f }).click();
+    await editor.getByRole('button', { name: 'Remove depth from this wall' }).click();
+  }
+  await expect(editor.locator('img.relief')).toHaveCount(0);
+  await editor.getByRole('button', { name: 'Add depth from the photos' }).click();
+  await expect(status(page)).toContainText('Depth added to 4 walls', { timeout: 30_000 });
+  await expect(editor.locator('img.relief')).toBeVisible();
+
+  const downloadPromise = page.waitForEvent('download');
+  await editor.getByRole('button', { name: 'Export JSON' }).click();
+  const exported = JSON.parse(await readFile((await (await downloadPromise).path()) as string, 'utf8')) as {
+    facades: Record<string, { relief?: { image: string; depthM: number; source?: string } }>;
+  };
+  for (const f of ['front', 'right', 'back', 'left']) {
+    expect(exported.facades[f]?.relief?.image).toMatch(/^data:image\/png;base64,/);
+    expect(exported.facades[f]?.relief?.source).toBe('structure');
+    expect(exported.facades[f]?.relief?.depthM).toBe(0.4);
+  }
+});
+
+test('depth: refine all walls with the real AI runtime (stand-in model), tune strength, export', async ({ page, isMobile }) => {
   test.skip(isMobile, 'the editor is a desktop tool');
   // A tiny model with Depth Anything's input and output, served instead of the 27 MB download.
   await page.addInitScript(() => {
@@ -149,14 +179,14 @@ test('depth: estimate all walls with the real runtime (stand-in model), tune str
   await editor.getByRole('button', { name: 'Load demo' }).click();
   await expect(status(page)).toContainText('Loaded the demo building');
   await step(page, 'Depth');
-  await editor.getByRole('button', { name: 'Estimate all four walls' }).click();
+  await editor.getByRole('button', { name: 'Refine with AI (27 MB download)' }).click();
   await expect(status(page)).toContainText('Depth added to 4 walls', { timeout: 60_000 });
   await expect(editor.locator('img.relief')).toBeVisible();
 
   const strength = editor.locator('#depth-strength');
   await strength.fill('1.5');
   await strength.dispatchEvent('input');
-  await expect(editor.getByText('Strength: 1.5 m')).toBeVisible();
+  await expect(editor.getByText('Strength: 1.50 m')).toBeVisible();
 
   const downloadPromise = page.waitForEvent('download');
   await editor.getByRole('button', { name: 'Export JSON' }).click();

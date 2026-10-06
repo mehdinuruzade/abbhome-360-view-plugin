@@ -44,11 +44,11 @@ const MAX_ANISOTROPY = 8;
  * shading on relief and cast shadows without washing out or double-darkening the image.
  * (three's lights are physical: a light of intensity π lights a surface facing it at 100 %.)
  */
-const SKY_INTENSITY = Math.PI * 0.82;
-const SUN_INTENSITY = Math.PI * 0.32;
+const SKY_INTENSITY = Math.PI * 0.6;
+const SUN_INTENSITY = Math.PI * 0.7;
 /** Sun from the front-left and above, matching the demo renders (front and left walls lit). */
-const SUN_DIRECTION = new Vector3(-0.55, 0.85, 0.75).normalize();
-const SHADOW_OPACITY = 0.28;
+const SUN_DIRECTION = new Vector3(-0.75, 0.6, 0.6).normalize();
+const SHADOW_OPACITY = 0.38;
 
 function canvasTexture(draw: (ctx: CanvasRenderingContext2D, size: number) => void, size = 256): CanvasTexture {
   const canvas = document.createElement('canvas');
@@ -475,6 +475,7 @@ export class BuildingScene extends EventTarget {
       const withMap = material as Material & { map?: Texture | null };
       // Facade photos are cached across rebuilds; generated textures belong to the mesh.
       if (withMap.map instanceof CanvasTexture) withMap.map.dispose();
+      (material as Material & { bumpMap?: Texture | null }).bumpMap?.dispose();
       const overlay = material.userData.overlay as { value?: Texture } | undefined;
       if (overlay?.value && !(overlay.value instanceof CanvasTexture)) overlay.value.dispose();
       material.dispose();

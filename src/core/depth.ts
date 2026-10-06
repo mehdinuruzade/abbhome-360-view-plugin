@@ -84,7 +84,7 @@ export function quantile(values: ArrayLike<number>, q: number): number {
   return sorted[i] ?? 0;
 }
 
-function medianFilter(values: Float32Array, width: number, height: number, radius: number): Float32Array {
+export function medianFilter(values: Float32Array, width: number, height: number, radius: number): Float32Array {
   if (radius <= 0) return values;
   const out = new Float32Array(values.length);
   const window: number[] = [];
@@ -105,7 +105,7 @@ function medianFilter(values: Float32Array, width: number, height: number, radiu
   return out;
 }
 
-const smoothstep = (e0: number, e1: number, x: number) => {
+export const smoothstep = (e0: number, e1: number, x: number) => {
   const t = Math.min(1, Math.max(0, (x - e0) / (e1 - e0)));
   return t * t * (3 - 2 * t);
 };
@@ -117,7 +117,7 @@ const smoothstep = (e0: number, e1: number, x: number) => {
  */
 export function depthToRelief(raw: DepthMap, width: number, height: number, options: ReliefOptions = {}): ReliefPixels {
   const opts = { ...DEFAULTS, ...options };
-  let values: Float32Array = new Float32Array(width * height);
+  const values = new Float32Array(width * height);
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) values[y * width + x] = sampleFloat(raw, (x + 0.5) / width, (y + 0.5) / height);
   }
@@ -138,8 +138,22 @@ export function depthToRelief(raw: DepthMap, width: number, height: number, opti
   const hi = quantile(values, 1 - opts.clip);
   const scale = Math.max(hi - mid, mid - lo, minScale);
   for (let i = 0; i < values.length; i++) values[i] = Math.min(1, Math.max(-1, ((values[i] ?? 0) - mid) / scale));
-  values = medianFilter(values, width, height, Math.round(opts.smoothing));
+  return encodeRelief(values, width, height, opts);
+}
 
+/**
+ * Relief values in −1 … +1 → relief pixels: median-filter, fade to the wall plane at the edges,
+ * encode as bytes (128 = plane).
+ */
+export function encodeRelief(
+  values: Float32Array,
+  width: number,
+  height: number,
+  options: Pick<ReliefOptions, 'smoothing' | 'edgeFade'> = {},
+): ReliefPixels {
+  const smoothing = options.smoothing ?? DEFAULTS.smoothing;
+  const edgeFade = options.edgeFade ?? DEFAULTS.edgeFade;
+  const filtered = medianFilter(values, width, height, Math.round(smoothing));
   const data = new Uint8ClampedArray(width * height);
   for (let y = 0; y < height; y++) {
     // Measured so the outermost pixels sit exactly on the edge (and get no relief).
@@ -147,8 +161,9 @@ export function depthToRelief(raw: DepthMap, width: number, height: number, opti
     for (let x = 0; x < width; x++) {
       const u = width > 1 ? x / (width - 1) : 0.5;
       const edge = Math.min(u, 1 - u, v, 1 - v);
-      const fade = opts.edgeFade > 0 ? smoothstep(0, opts.edgeFade, edge) : 1;
-      data[y * width + x] = Math.round(128 + 127 * (values[y * width + x] ?? 0) * fade);
+      const fade = edgeFade > 0 ? smoothstep(0, edgeFade, edge) : 1;
+      const value = Math.min(1, Math.max(-1, filtered[y * width + x] ?? 0));
+      data[y * width + x] = Math.round(128 + 127 * value * fade);
     }
   }
   return { width, height, data };

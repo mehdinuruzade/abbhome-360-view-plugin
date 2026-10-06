@@ -1,4 +1,4 @@
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { deriveDimensions, quadAspect } from '../src/core/dimensions';
 import type { BuildingConfig, Corners, FacadeConfig, FacadeId, UnitCell } from '../src/core/types';
 import { createUnits, updateApartment, type WithEditor } from '../src/editor/state';
@@ -61,7 +61,12 @@ const STACKS: Stack[] = [
   { key: 'H', position: 'west', cells: [{ facade: 'left', col: 2 }], rooms: 2, areaM2: 66.2 },
 ];
 
-const DEMO_RELIEF_DEPTH_M = 0.8;
+/** Written by `npm run demo:depth` next to the relief images: how they were made and their strength. */
+function demoRelief(): { source: string; depthM: number } | null {
+  const file = new URL('../public/demo/assets/relief.json', import.meta.url);
+  if (!existsSync(file)) return null;
+  return JSON.parse(readFileSync(file, 'utf8')) as { source: string; depthM: number };
+}
 
 const RESIDENTIAL_LEVELS = Array.from({ length: 13 }, (_, i) => i + 1);
 
@@ -84,11 +89,11 @@ export function buildDemoConfig(): WithEditor {
   const height = round(((front.ground - front.top) * STOREY_M) / TYPICAL_STOREY_PX, 2);
   const facades = {} as Record<FacadeId, FacadeConfig>;
   const aspects = {} as Record<FacadeId, number>;
+  const relief = demoRelief();
   for (const f of ['front', 'right', 'back', 'left'] as const) {
     facades[f] = { image: `assets/${f}.webp`, corners: corners(f) };
-    // Written by `npm run demo:depth` (needs a browser that can download the depth model).
-    if (existsSync(new URL(`../public/demo/assets/${f}-relief.png`, import.meta.url))) {
-      facades[f].relief = { image: `assets/${f}-relief.png`, depthM: DEMO_RELIEF_DEPTH_M };
+    if (relief && existsSync(new URL(`../public/demo/assets/${f}-relief.png`, import.meta.url))) {
+      facades[f].relief = { image: `assets/${f}-relief.png`, depthM: relief.depthM, source: relief.source };
     }
     aspects[f] = quadAspect(facades[f].corners, IMAGE);
   }

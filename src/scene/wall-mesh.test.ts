@@ -26,12 +26,15 @@ describe('wall mesh', () => {
     const wall = createWall('front', d, corners, null, { pixels: halves(), depthM: 0.8 });
     const g = wall.geometry;
     const { widthSegments: gx, heightSegments: gy } = g.parameters;
-    expect(gx).toBe(128);
+    expect(gx).toBe(224);
     expect(gy).toBeGreaterThan(gx); // the wall is taller than wide
     const pos = g.getAttribute('position') as BufferAttribute;
     const row = Math.floor(gy / 2) * (gx + 1);
     expect(pos.getZ(row + Math.floor(gx * 0.2))).toBeCloseTo(0.8, 2);
     expect(pos.getZ(row + Math.floor(gx * 0.8))).toBeCloseTo(-0.8, 1);
+    // The same relief shades fine detail as a bump map read through the second UV channel.
+    expect(wall.material.bumpMap?.channel).toBe(1);
+    expect(g.getAttribute('uv1').count).toBe(pos.count);
   });
 
   it('carries facade uv for the overlay and a flat invisible proxy for picking', () => {

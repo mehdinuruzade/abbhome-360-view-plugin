@@ -1,0 +1,11 @@
+import { chromium } from '@playwright/test';
+const [out, az, polar, w, h] = process.argv.slice(2);
+const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+const p = await b.newPage({ viewport: { width: Number(w || 1200), height: Number(h || 900) } });
+await p.goto('http://localhost:4180/demo/');
+await p.waitForFunction(() => document.querySelector('abb-building-360')?.building, null, { timeout: 60000 });
+await p.waitForTimeout(2500);
+if (az) await p.evaluate(([az, polar]) => { const el = document.querySelector('abb-building-360'); el.setAttribute('availability','hidden'); const s = el.scene ?? el._scene; if (s?.rig) { s.rig.controls.setAzimuthalAngle?.(Number(az)); } }, [az, polar]);
+await p.waitForTimeout(1500);
+await p.locator('abb-building-360').screenshot({ path: out });
+await b.close();

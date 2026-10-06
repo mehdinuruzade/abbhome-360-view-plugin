@@ -2,10 +2,12 @@ import {
   BufferAttribute,
   DataTexture,
   FrontSide,
+  LinearFilter,
   Mesh,
   MeshBasicMaterial,
   MeshStandardMaterial,
   PlaneGeometry,
+  RedFormat,
   SRGBColorSpace,
   type Texture,
 } from 'three';
@@ -25,7 +27,7 @@ import type { Corners, Dimensions, FacadeId } from '../core/types';
  */
 
 export const WALL_SEGMENTS = 16;
-const RELIEF_SEGMENTS_U = 128;
+const RELIEF_SEGMENTS_U = 224;
 export const PLAIN_WALL_COLOR = 0xd8d3cb;
 
 export interface WallRelief {
@@ -72,7 +74,28 @@ function writeFacadeUvs(geometry: PlaneGeometry): void {
     }
   }
   geometry.setAttribute('facadeUv', new BufferAttribute(data, 2));
+  // The relief's bump map reads the same coordinates through three's second UV channel.
+  geometry.setAttribute('uv1', new BufferAttribute(data, 2));
 }
+
+/**
+ * The relief as a bump map, so window reveals and slab edges shade crisply even between the
+ * displaced vertices. Rows are flipped to match the v-up facade coordinates.
+ */
+function bumpTexture(pixels: ReliefPixels): DataTexture {
+  const { width, height, data } = pixels;
+  const flipped = new Uint8Array(width * height);
+  for (let y = 0; y < height; y++) flipped.set(data.subarray((height - 1 - y) * width, (height - y) * width), y * width);
+  const t = new DataTexture(flipped, width, height, RedFormat);
+  t.channel = 1;
+  t.magFilter = LinearFilter;
+  t.minFilter = LinearFilter;
+  t.needsUpdate = true;
+  return t;
+}
+
+/** Bump height per relief unit: a little under the displacement, which already shades the large forms. */
+const BUMP_PER_METRE = 1.2;
 
 /** Moves each vertex along the wall's normal (local +z) by the relief there. */
 export function displaceWall(geometry: PlaneGeometry, relief: WallRelief): void {
@@ -88,13 +111,17 @@ export function displaceWall(geometry: PlaneGeometry, relief: WallRelief): void 
   geometry.computeBoundingSphere();
 }
 
-function wallMaterial(map: Texture | null): MeshStandardMaterial {
+function wallMaterial(map: Texture | null, relief: WallRelief | null): MeshStandardMaterial {
   const material = new MeshStandardMaterial({
     map,
     color: map ? 0xffffff : PLAIN_WALL_COLOR,
     roughness: 1,
     metalness: 0,
   });
+  if (relief && relief.depthM > 0) {
+    material.bumpMap = bumpTexture(relief.pixels);
+    material.bumpScale = relief.depthM * BUMP_PER_METRE;
+  }
   const overlay = { value: transparentTexture() as Texture };
   material.userData.overlay = overlay;
   material.onBeforeCompile = (shader) => {
@@ -109,7 +136,7 @@ function wallMaterial(map: Texture | null): MeshStandardMaterial {
         '#include <map_fragment>\nvec4 overlayTexel = texture2D(overlayMap, vFacadeUv);\ndiffuseColor.rgb = mix(diffuseColor.rgb, overlayTexel.rgb, overlayTexel.a);',
       );
   };
-  material.customProgramCacheKey = () => 'abb360-wall';
+  material.customProgramCacheKey = () => (material.bumpMap ? 'abb360-wall-bump' : 'abb360-wall');
   return material;
 }
 
@@ -127,12 +154,12 @@ export function createWall(
 ): WallMesh {
   const frame = facadeFrame(f, d);
   const gx = relief ? RELIEF_SEGMENTS_U : WALL_SEGMENTS;
-  const gy = relief ? Math.min(256, Math.max(64, Math.round((RELIEF_SEGMENTS_U * frame.height) / frame.width))) : WALL_SEGMENTS;
+  const gy = relief ? Math.min(384, Math.max(64, Math.round((RELIEF_SEGMENTS_U * frame.height) / frame.width))) : WALL_SEGMENTS;
   const geometry = new PlaneGeometry(frame.width, frame.height, gx, gy);
   if (map) writeWallUvs(geometry, corners);
   writeFacadeUvs(geometry);
   if (relief && relief.depthM > 0) displaceWall(geometry, relief);
-  const wall = new Mesh(geometry, wallMaterial(map));
+  const wall = new Mesh(geometry, wallMaterial(map, relief));
   wall.name = `wall-${f}`;
   wall.userData.facade = f;
   wall.castShadow = true;

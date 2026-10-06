@@ -35,10 +35,11 @@ the committed `public/demo/building.json`).
 - **Playwright:** never `playwright install` in the cloud container (Chromium 141 is at
   /opt/pw-browsers and matches 1.56.1). WebGL needs `--use-angle=swiftshader --enable-unsafe-swiftshader`.
   Touch tests use raw CDP touch events; `Input.synthesizeScrollGesture` doesn't scroll in headless.
-- **Depth:** the editor runs Depth Anything V2 Small (`src/editor/depth-model.ts`); post-processing
-  is pure and tested (`src/core/depth.ts`). Hugging Face is unreachable from the cloud container, so
-  tests use `tests/fixtures/stand-in-depth.onnx` (same input/output names, mean brightness): it proves
-  the runtime path, never the quality. Don't commit its output as demo data; `npm run demo:depth`
-  must run where the real model downloads.
+- **Depth:** the default is structure depth (`src/core/structure-depth.ts`, pure and tested: glass
+  back, slab bands forward); the demo's relief comes from it (`npm run demo:depth`). The optional AI
+  path runs Depth Anything V2 Small (`src/editor/depth-model.ts`, post-processing in `src/core/depth.ts`).
+  Hugging Face is unreachable from the cloud container, so tests use `tests/fixtures/stand-in-depth.onnx`
+  (same input/output names, mean brightness): it proves the runtime path, never the quality. Never
+  commit its output as demo data; `demo:depth -- --ai` must run where the real model downloads.
 - **Demo renders** in `public/demo/assets/` are the owner's, included with permission: don't
   reuse them elsewhere.

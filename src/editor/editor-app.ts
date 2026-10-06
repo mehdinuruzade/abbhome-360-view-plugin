@@ -2,16 +2,15 @@ import { LitElement, css, html, nothing, type PropertyValues } from 'lit';
 import { deriveDimensions, quadAspect, type DimensionWarning } from '../core/dimensions';
 import { facadeWidth } from '../core/facade-frame';
 import { fullImageCorners, resolveUrl } from '../core/parse-config';
-import { FACADES, type BuildingConfig, type Corners, type FacadeId, type UnitCell } from '../core/types';
+import { FACADES, type BuildingConfig, type Corners, type FacadeId, type Relief, type UnitCell } from '../core/types';
 import { BuildingScene } from '../scene/building-scene';
 import '../widget/index';
 import './apartment-table';
 import type { ApartmentChangeDetail } from './apartment-table';
 import './corner-view';
 import type { CornersChangeDetail } from './corner-view';
-import type { DepthMap } from '../core/depth';
 import { DEFAULT_RELIEF_DEPTH_M } from '../core/parse-config';
-import { estimateRelief, reliefFromRaw } from './depth-step';
+import { estimateRelief, reliefFromRaw, STRUCTURE_DEPTH_M, structureRelief, type EstimatedRelief, type RawRelief } from './depth-step';
 import './facade-view';
 import {
   clearDraft,
@@ -118,8 +117,8 @@ export class AbbEditor extends LitElement {
   declare protected _smoothing: number;
 
   private scene: BuildingScene | null = null;
-  /** Model output per wall, kept so smoothing can change without rerunning the model. */
-  private rawDepth: Partial<Record<FacadeId, DepthMap>> = {};
+  /** What each wall's relief was made from, kept so smoothing can change without starting over. */
+  private rawDepth: Partial<Record<FacadeId, RawRelief>> = {};
   private previewFrame = 0;
   private saveTimer = 0;
 
@@ -139,7 +138,7 @@ export class AbbEditor extends LitElement {
     this._invalidCorners = false;
     this._buyerPreview = false;
     this._depthBusy = false;
-    this._smoothing = 2;
+    this._smoothing = 1;
     this.resetLevelRange();
   }
 
@@ -345,7 +344,7 @@ export class AbbEditor extends LitElement {
     this.setCorners(f, corners);
     if (this.config.facades[f].relief) {
       delete this.rawDepth[f];
-      this._message = `The ${FACADE_LABEL[f].toLowerCase()} corners changed: estimate its depth again in step 3 so it lines up.`;
+      this._message = `The ${FACADE_LABEL[f].toLowerCase()} corners changed: add its depth again in step 3 so it lines up.`;
     }
   }
 
@@ -397,14 +396,22 @@ export class AbbEditor extends LitElement {
     return facadeWidth(f, this.config.dimensions) / this.config.dimensions.height;
   }
 
-  private setRelief(f: FacadeId, relief: { image: string; depthM: number } | undefined) {
+  private setRelief(f: FacadeId, relief: Relief | undefined) {
     const facade = { ...this.config.facades[f] };
     if (relief) facade.relief = relief;
     else delete facade.relief;
     this.setConfig({ ...this.config, facades: { ...this.config.facades, [f]: facade } });
   }
 
-  private async estimateDepth(walls: FacadeId[]) {
+  /**
+   * Adds depth to the walls that have a photo, one at a time. A wall keeps its strength when it is
+   * redone the same way; switching between structure and model depth starts from that method's default.
+   */
+  private async addDepth(
+    walls: FacadeId[],
+    source: 'structure' | 'model',
+    run: (f: FacadeId, label: string) => Promise<EstimatedRelief>,
+  ) {
     const ready = walls.filter((f) => this._doc.images[f].src);
     if (!ready.length) {
       this._message = 'Add the photos first (step 1).';
@@ -413,27 +420,45 @@ export class AbbEditor extends LitElement {
     this._depthBusy = true;
     try {
       for (const [i, f] of ready.entries()) {
-        const label = `${FACADE_LABEL[f].toLowerCase()} (${i + 1}/${ready.length})`;
-        const { raw, dataUrl } = await estimateRelief(this._doc.images[f].src as string, this.config.facades[f].corners, this.wallAspect(f), {
-          smoothing: this._smoothing,
-          onProgress: ({ stage, fraction }) => {
-            this._message =
-              stage === 'download'
-                ? `Downloading the depth model${fraction !== undefined ? ` (${Math.round(fraction * 100)} %)` : ''}… only the first time.`
-                : stage === 'prepare'
-                  ? 'Preparing the depth model…'
-                  : `Estimating depth for the ${label}…`;
-          },
-        });
+        const { raw, dataUrl } = await run(f, `${FACADE_LABEL[f].toLowerCase()} (${i + 1}/${ready.length})`);
+        const previous = this.config.facades[f].relief;
+        const depthM =
+          previous && (previous.source ?? 'model') === source ? previous.depthM : source === 'structure' ? STRUCTURE_DEPTH_M : DEFAULT_RELIEF_DEPTH_M;
         this.rawDepth[f] = raw;
-        this.setRelief(f, { image: dataUrl, depthM: this.config.facades[f].relief?.depthM ?? DEFAULT_RELIEF_DEPTH_M });
+        this.setRelief(f, { image: dataUrl, depthM, source });
       }
       this._message = `Depth added to ${ready.length === 1 ? `the ${FACADE_LABEL[ready[0] as FacadeId].toLowerCase()}` : `${ready.length} walls`}. Adjust the strength and check the 3D preview.`;
     } catch (e) {
-      this._message = `Couldn't estimate depth: ${e instanceof Error ? e.message : String(e)}. Check your connection and try again.`;
+      this._message =
+        source === 'model'
+          ? `Couldn't estimate depth: ${e instanceof Error ? e.message : String(e)}. Check your connection and try again.`
+          : `Couldn't read the photo: ${e instanceof Error ? e.message : String(e)}. Photos from another site need to allow it (CORS); upload the file instead.`;
     } finally {
       this._depthBusy = false;
     }
+  }
+
+  private structureDepth(walls: FacadeId[]) {
+    return this.addDepth(walls, 'structure', (f, label) => {
+      this._message = `Adding depth to the ${label}…`;
+      return structureRelief(this._doc.images[f].src as string, this.config.facades[f].corners, this.wallAspect(f), { smoothing: this._smoothing });
+    });
+  }
+
+  private estimateDepth(walls: FacadeId[]) {
+    return this.addDepth(walls, 'model', (f, label) =>
+      estimateRelief(this._doc.images[f].src as string, this.config.facades[f].corners, this.wallAspect(f), {
+        smoothing: this._smoothing,
+        onProgress: ({ stage, fraction }) => {
+          this._message =
+            stage === 'download'
+              ? `Downloading the depth model${fraction !== undefined ? ` (${Math.round(fraction * 100)} %)` : ''}… only the first time.`
+              : stage === 'prepare'
+                ? 'Preparing the depth model…'
+                : `Estimating depth for the ${label}…`;
+        },
+      }),
+    );
   }
 
   private setDepthStrength(f: FacadeId, e: Event) {
@@ -676,15 +701,17 @@ export class AbbEditor extends LitElement {
     return html`
       <h2>3. Depth</h2>
       <p class="help">
-        Estimates depth from each photo, so balconies, slabs and recesses stand out in 3D and catch light and shadow.
-        It runs in this browser; the first time it downloads a 27 MB model. Depth from a single photo is approximate:
-        check the 3D preview and lower the strength if something looks wrong.
+        Gives the walls real depth, so slabs, balconies and windows stand out in 3D and catch light and shadow.
+        <strong>Add depth from the photos</strong> works it out from each photo's structure (glass sits back, slab edges
+        stick out), instantly. <strong>Refine with AI</strong> runs a depth model in this browser instead (a 27 MB download
+        the first time). Both are approximate: check the 3D preview and lower the strength if something looks wrong.
       </p>
       <div class="inline-form">
-        <button type="button" class="primary" ?disabled=${this._depthBusy} @click=${() => this.estimateDepth([...FACADES])}>Estimate all four walls</button>
-        <button type="button" ?disabled=${this._depthBusy} @click=${() => this.estimateDepth([f])}>Estimate this wall</button>
+        <button type="button" class="primary" ?disabled=${this._depthBusy} @click=${() => this.structureDepth([...FACADES])}>Add depth from the photos</button>
+        <button type="button" ?disabled=${this._depthBusy} @click=${() => this.structureDepth([f])}>This wall only</button>
+        <button type="button" ?disabled=${this._depthBusy} @click=${() => this.estimateDepth([...FACADES])}>Refine with AI (27 MB download)</button>
         <label>Smoothing<input id="depth-smoothing" type="range" min="0" max="4" step="1" .value=${String(this._smoothing)}
-          ?disabled=${!canResmooth} title=${canResmooth ? '' : 'Estimate depth in this session to change smoothing'} @change=${this.setSmoothing} /></label>
+          ?disabled=${!canResmooth} title=${canResmooth ? '' : 'Add depth in this session to change smoothing'} @change=${this.setSmoothing} /></label>
       </div>
       ${this.renderFacadeTabs()}
       <div class="depth-grid">
@@ -699,7 +726,7 @@ export class AbbEditor extends LitElement {
       </div>
       ${relief
         ? html`<div class="inline-form">
-            <label>Strength: ${relief.depthM.toFixed(1)} m<input id="depth-strength" type="range" min="0" max="3" step="0.1" .value=${String(relief.depthM)}
+            <label>Strength: ${relief.depthM.toFixed(2)} m<input id="depth-strength" type="range" min="0" max="2" step="0.05" .value=${String(relief.depthM)}
               @input=${(e: Event) => this.setDepthStrength(f, e)} /></label>
             <button type="button" @click=${() => this.setRelief(f, undefined)}>Remove depth from this wall</button>
           </div>`
