@@ -1,0 +1,43 @@
+{
+  "name": "abbhome-360-view-plugin",
+  "version": "0.1.0",
+  "description": "Embeddable 3D building viewer: four facade elevations become an orbitable building with clickable apartments.",
+  "private": true,
+  "type": "module",
+  "license": "UNLICENSED",
+  "main": "./dist/lib/abb-building-360.js",
+  "module": "./dist/lib/abb-building-360.js",
+  "types": "./src/widget/index.ts",
+  "files": [
+    "dist/lib"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && vite build --config vite.lib.config.ts",
+    "preview": "vite preview --port 4173 --strictPort --host 127.0.0.1",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "e2e": "playwright test",
+    "size": "node scripts/check-size.mjs",
+    "demo:config": "tsx scripts/make-demo-config.ts"
+  },
+  "dependencies": {
+    "lit": "3.3.3",
+    "three": "0.186.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1",
+    "@types/node": "^22.10.0",
+    "@types/pngjs": "6.0.5",
+    "@types/three": "0.186.0",
+    "pngjs": "7.0.0",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3",
+    "vite": "7.3.7",
+    "vitest": "5.0.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
