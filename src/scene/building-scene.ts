@@ -57,6 +57,7 @@ export class BuildingScene extends EventTarget {
   private overlayState: OverlayState = {};
   private config: BuildingConfig | null = null;
   private inset = { right: 0, bottom: 0 };
+  private loadToken = 0;
   private frameRequested = false;
   private rafId = 0;
   private contextLost = false;
@@ -91,11 +92,13 @@ export class BuildingScene extends EventTarget {
    * `keepCamera` (the editor's live preview) the view stays put unless the size changed.
    */
   async load(config: BuildingConfig, opts: { signal?: AbortSignal; keepCamera?: boolean } = {}): Promise<void> {
+    const token = ++this.loadToken;
+    const maps = await Promise.all(FACADES.map((f) => this.texture(config.facades[f].image, f)));
+    // A newer load() started while the textures came in: let that one draw.
+    if (opts.signal?.aborted || this.disposed || token !== this.loadToken) return;
     const sizeChanged =
       !this.config || JSON.stringify(this.config.dimensions) !== JSON.stringify(config.dimensions);
     this.config = config;
-    const maps = await Promise.all(FACADES.map((f) => this.texture(config.facades[f].image, f)));
-    if (opts.signal?.aborted || this.disposed || this.config !== config) return;
     this.build(config, maps);
     if (!opts.keepCamera || sizeChanged) this.rig.frame(config.dimensions, this.aspect());
     this.renderNow();
