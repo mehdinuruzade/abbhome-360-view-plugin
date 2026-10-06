@@ -1,8 +1,8 @@
 # Building 360 plugin
 
-Four straight-on photos of a residential building become an orbitable 3D building, lit by a
-sun that casts real shadows, with depth worked out from the photos so slabs stand out and
-windows sit back. Apartments
+Four straight-on photos of a residential building become an orbitable 3D building of any
+footprint (L, U, T, notches, a podium with a tower), lit by a sun that casts real shadows, with
+depth worked out from the photos so slabs stand out and windows sit back. Apartments
 marked on the facades light up in 3D; buyers tap one, see its details, and **Select** it, which
 notifies the page that embeds the widget. That page (ABB Home) takes over from there: listing,
 lead form, mortgage calculator.
@@ -111,6 +111,9 @@ Theme with CSS custom properties on the element: `--abb360-accent`, `--abb360-ac
   "id": "demo-residence",
   "name": "Demo residence",
   "dimensions": { "width": 29.39, "depth": 22.79, "height": 42.43 },   // metres; width = front/back walls
+  "massing": { "blocks": [                                              // optional shape; without it, a box
+    { "polygon": [[0, 0], [16.05, 0], [16.05, 1.8], [18.43, 1.8], [18.43, 0], [29.39, 0], …], "height": 42.43 }
+  ] },
   "facades": {
     "front": {
       "image": "assets/front.webp",                                      // relative to building.json
@@ -133,7 +136,14 @@ Theme with CSS custom properties on the element: `--abb360-accent`, `--abb360-ac
 
 - **Facade order:** front, right, back, left. Walking round the building, each wall is the one to the right of the last.
 - **`corners`:** where the wall's corners sit in its photo, as fractions of the image's width and height (y down). Keystoned photos are fine; the widget corrects the perspective.
-- **`regions`:** an apartment's outline on one wall in facade coordinates: u from the wall's left edge to its right, v from the roof line (0) to the ground (1), as seen from outside. A corner apartment has one region on each of its two walls.
+- **`massing`** (optional): the building's shape as blocks, each a footprint polygon rising from
+  the ground to `height`. Plan coordinates in metres: x left → right as seen from the front, d back
+  from the front edge, inside `dimensions` (which stays the bounding box and the tallest height).
+  A setback or a podium with a tower is two blocks. Each wall shows the photo of the side it faces,
+  projected straight onto it, so a recessed wall shows the part of the photo in front of it. Walls
+  hidden in their photo (a courtyard's side walls, a tower's base behind its podium) get the
+  photo's average tone. Widgets without shape support show the bounding box.
+- **`regions`:** an apartment's outline on one side's photo in facade coordinates: u from the left edge of that elevation to its right, v from the roof line (0) to the ground (1), as seen from outside. A corner apartment has one region on each of its two sides.
 - **`relief`** (optional): a grayscale image in the wall's facade coordinates. 128 is the wall plane,
   white sticks out by `depthM` metres and black goes in by it. The widget pushes the wall surface in
   and out with it and shades it as a bump map. `source` says how the editor made it (`structure` or
@@ -214,8 +224,10 @@ tests/e2e/    Playwright tests
 
 ## Limitations of this prototype
 
-- The building is a box whose walls are pushed in and out by depth worked out from the photos; it
-  isn't a measured 3D model, and steep depth changes stretch the photo on their sides.
+- The building is made of blocks with flat roofs (no pitched roofs or overhangs; curves are polygons),
+  and its walls are pushed in and out by depth worked out from the photos. It isn't a measured 3D
+  model: steep depth changes stretch the photo on their sides, and a wall at an angle shows the photo
+  of the side it faces most, stretched by the angle.
 - English strings only; prices and areas already format for the `locale` you pass.
 - The editor draws apartments as grid cells (floor × column). The config and widget already accept any polygon.
 - No backend, accounts, reservations or spreadsheet import yet.

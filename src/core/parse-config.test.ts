@@ -160,4 +160,52 @@ describe('relief', () => {
     expect(config.facades.left.relief).toBeUndefined();
     expect(warnings.some((w) => w.startsWith('facades.left.relief'))).toBe(true);
   });
+
+  it('reads massing blocks, keeps unknown fields and drops a closing duplicate point', () => {
+    const raw = minimal({
+      massing: {
+        roofStyle: 'flat',
+        blocks: [{ polygon: [[0, 0], [30, 0], [30, 10], [12, 10], [12, 20], [0, 20], [0, 0]], height: 40, label: 'L' }],
+      },
+    });
+    const { config, warnings } = parseConfig(raw);
+    expect(warnings).not.toContainEqual(expect.stringContaining('massing'));
+    expect(config.massing?.roofStyle).toBe('flat');
+    expect(config.massing?.blocks[0]?.polygon).toHaveLength(6);
+    expect(config.massing?.blocks[0]?.label).toBe('L');
+  });
+
+  it('skips broken massing blocks and falls back to the box when none is left', () => {
+    const { config, warnings } = parseConfig(
+      minimal({
+        massing: {
+          blocks: [
+            { polygon: [[0, 0], [10, 0]], height: 10 },
+            { polygon: [[0, 0], [10, 10], [10, 0], [0, 10]], height: 10 }, // a bow tie
+            'nonsense',
+          ],
+        },
+      }),
+    );
+    expect(config.massing).toBeUndefined();
+    expect(warnings).toContainEqual(expect.stringContaining('at least 3 points'));
+    expect(warnings).toContainEqual(expect.stringContaining('crosses itself'));
+    expect(warnings).toContainEqual(expect.stringContaining('shown as a box'));
+  });
+
+  it('caps a block at the building height and fills in a missing one', () => {
+    const { config, warnings } = parseConfig(
+      minimal({
+        massing: {
+          blocks: [
+            { polygon: [[0, 0], [30, 0], [30, 20], [0, 20]], height: 55 },
+            { polygon: [[5, 5], [10, 5], [10, 10]] },
+          ],
+        },
+      }),
+    );
+    expect(config.massing?.blocks.map((b) => b.height)).toEqual([40, 40]);
+    expect(warnings).toContainEqual(expect.stringContaining('taller than dimensions.height'));
+    expect(warnings).toContainEqual(expect.stringContaining('has no height'));
+  });
 });

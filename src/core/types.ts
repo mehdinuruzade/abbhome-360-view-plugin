@@ -106,6 +106,23 @@ export interface EditorData {
   [key: string]: unknown;
 }
 
+/**
+ * One part of the building: a footprint polygon rising from the ground to `height`. Plan
+ * coordinates in metres: x runs left → right as seen from the front, d is the distance back from
+ * the front edge of the building's bounding box (so the box is 0 … width by 0 … depth).
+ */
+export interface MassingBlock {
+  polygon: Vec2[];
+  height: number;
+  [key: string]: unknown;
+}
+
+/** The building's shape. Without it the building is the box given by `dimensions`. */
+export interface Massing {
+  blocks: MassingBlock[];
+  [key: string]: unknown;
+}
+
 export interface BuildingConfig {
   schemaVersion: number;
   id: string;
@@ -114,6 +131,8 @@ export interface BuildingConfig {
   facades: Record<FacadeId, FacadeConfig>;
   apartments: Apartment[];
   regions: Region[];
+  /** Optional shape; `dimensions` stays its bounding box and tallest height. */
+  massing?: Massing;
   editor?: EditorData;
   [key: string]: unknown;
 }

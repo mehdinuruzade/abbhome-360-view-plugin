@@ -10,6 +10,8 @@ import {
   type EditorUnit,
   type FacadeConfig,
   type FacadeId,
+  type Massing,
+  type MassingBlock,
   type Money,
   type Region,
   type Relief,
@@ -108,6 +110,90 @@ function parseDimensions(raw: unknown): Dimensions {
     throw new ConfigError('dimensions need positive width, depth and height in metres');
   }
   return { ...o, width, depth, height };
+}
+
+/** Proper crossing of segments p1–p2 and q1–q2 (touching at an end doesn't count). */
+function segmentsCross(p1: Vec2, p2: Vec2, q1: Vec2, q2: Vec2): boolean {
+  const orient = (a: Vec2, b: Vec2, c: Vec2) => (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
+  const d1 = orient(q1, q2, p1);
+  const d2 = orient(q1, q2, p2);
+  const d3 = orient(p1, p2, q1);
+  const d4 = orient(p1, p2, q2);
+  return ((d1 > 1e-9 && d2 < -1e-9) || (d1 < -1e-9 && d2 > 1e-9)) && ((d3 > 1e-9 && d4 < -1e-9) || (d3 < -1e-9 && d4 > 1e-9));
+}
+
+function selfIntersects(poly: readonly Vec2[]): boolean {
+  const n = poly.length;
+  for (let i = 0; i < n; i++) {
+    for (let j = i + 2; j < n; j++) {
+      if (i === 0 && j === n - 1) continue; // neighbours through the closing edge
+      if (segmentsCross(poly[i] as Vec2, poly[(i + 1) % n] as Vec2, poly[j] as Vec2, poly[(j + 1) % n] as Vec2)) return true;
+    }
+  }
+  return false;
+}
+
+function parseBlock(raw: unknown, i: number, d: Dimensions, warnings: string[]): MassingBlock | null {
+  const where = `massing.blocks[${i}]`;
+  if (!isObject(raw) || !Array.isArray(raw.polygon)) {
+    warnings.push(`${where} needs a polygon; skipped`);
+    return null;
+  }
+  const polygon: Vec2[] = [];
+  for (const p of raw.polygon) {
+    if (!Array.isArray(p) || !isFiniteNumber(p[0]) || !isFiniteNumber(p[1])) continue;
+    const last = polygon[polygon.length - 1];
+    if (!last || last[0] !== p[0] || last[1] !== p[1]) polygon.push([p[0], p[1]]);
+  }
+  const first = polygon[0];
+  const last = polygon[polygon.length - 1];
+  if (polygon.length > 1 && first && last && first[0] === last[0] && first[1] === last[1]) polygon.pop();
+  if (polygon.length < 3) {
+    warnings.push(`${where} needs at least 3 points; skipped`);
+    return null;
+  }
+  if (selfIntersects(polygon)) {
+    warnings.push(`${where} crosses itself; skipped`);
+    return null;
+  }
+  let area = 0;
+  for (let k = 0; k < polygon.length; k++) {
+    const a = polygon[k] as Vec2;
+    const b = polygon[(k + 1) % polygon.length] as Vec2;
+    area += a[0] * b[1] - b[0] * a[1];
+  }
+  if (Math.abs(area) < 1e-6) {
+    warnings.push(`${where} has no area; skipped`);
+    return null;
+  }
+  let height = isFiniteNumber(raw.height) && raw.height > 0 ? raw.height : d.height;
+  if (!(isFiniteNumber(raw.height) && raw.height > 0)) warnings.push(`${where} has no height; using the building's ${d.height} m`);
+  if (height > d.height + 1e-6) {
+    warnings.push(`${where} is taller than dimensions.height; shown ${d.height} m tall`);
+    height = d.height;
+  }
+  return { ...raw, polygon, height };
+}
+
+/** Lenient: unusable blocks are skipped; with none left the building is the plain box. */
+function parseMassing(raw: unknown, d: Dimensions, warnings: string[]): Massing | null {
+  if (raw === undefined || raw === null) return null;
+  if (!isObject(raw) || !Array.isArray(raw.blocks)) {
+    warnings.push('massing needs a list of blocks; the building is shown as a box');
+    return null;
+  }
+  const blocks = raw.blocks.map((b, i) => parseBlock(b, i, d, warnings)).filter((b): b is MassingBlock => b !== null);
+  if (!blocks.length) {
+    warnings.push('massing has no usable blocks; the building is shown as a box');
+    return null;
+  }
+  const xs = blocks.flatMap((b) => b.polygon.map((p) => p[0]));
+  const ds = blocks.flatMap((b) => b.polygon.map((p) => p[1]));
+  const tol = 0.01 * Math.max(d.width, d.depth);
+  if (Math.min(...xs) < -tol || Math.max(...xs) > d.width + tol || Math.min(...ds) < -tol || Math.max(...ds) > d.depth + tol) {
+    warnings.push('massing reaches outside dimensions.width × depth; walls there have no photo');
+  }
+  return { ...raw, blocks };
 }
 
 function parseMoney(raw: unknown): Money | null {
@@ -277,6 +363,7 @@ export function parseConfig(input: unknown, baseUrl?: string): ParseResult {
     .map((raw, i) => parseRegion(raw, i, ids, warnings))
     .filter((r): r is Region => r !== null);
 
+  const massing = parseMassing(input.massing, dimensions, warnings);
   const editor = parseEditor(input.editor, warnings);
   const id = typeof input.id === 'string' || typeof input.id === 'number' ? String(input.id) : 'building';
   const config: BuildingConfig = {
@@ -289,6 +376,8 @@ export function parseConfig(input: unknown, baseUrl?: string): ParseResult {
     apartments,
     regions,
   };
+  if (massing) config.massing = massing;
+  else delete config.massing;
   if (editor) config.editor = editor;
   else delete config.editor;
   return { config, warnings };

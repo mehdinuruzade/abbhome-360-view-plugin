@@ -24,6 +24,9 @@ the committed `public/demo/building.json`).
 - **One set of conventions for walls** (`src/core/facade-frame.ts`): front, right, back, left;
   (u, v) = right/down as seen from outside; walls are planes rotated about Y, never negatively
   scaled. The image y flip lives only in `imageToTextureUv`. Tests guard the corner ring.
+- **Shapes** (`src/core/massing.ts`): blocks → walls; every wall shows the elevation it faces,
+  projected straight onto it, so photos, regions, the grid and relief stay in facade space. Configs
+  without `massing` must render exactly as the old box (tests compare with `facade-frame.ts`).
 - **Regions are derived** in the editor from the `editor` block (floor lines × dividers);
   change the grid model in `src/editor/state.ts`, which the demo generator also uses.
 - **The widget lives in other people's pages:** no global CSS, no wheel or touch-scroll hijacking,

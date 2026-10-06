@@ -2,6 +2,7 @@ import { CanvasTexture, SRGBColorSpace, Vector3 } from 'three';
 import { statusColor } from '../core/apartments';
 import { reliefAt } from '../core/depth';
 import { facadeFrame, facadeWidth, uvToWorld } from '../core/facade-frame';
+import type { FacadePoint } from '../core/massing';
 import { pointInPolygon, polygonArea, polygonCentroid } from '../core/geometry2d';
 import { FACADES, type Apartment, type Dimensions, type FacadeId, type Region } from '../core/types';
 import type { WallRelief } from './wall-mesh';
@@ -47,9 +48,14 @@ export class OverlayLayer {
   private anchorsById = new Map<string, RegionAnchor[]>();
   private state: OverlayState = { showAll: true };
 
+  /**
+   * `locate` finds where facade (u, v) is on the building's walls (see massing.facadeToWorld);
+   * without it, or where it finds nothing, anchors sit on the bounding box.
+   */
   constructor(
     private readonly dims: Dimensions,
     private readonly reliefOf: (f: FacadeId) => WallRelief | null,
+    private readonly locate: (f: FacadeId, u: number, v: number) => FacadePoint | null = () => null,
   ) {
     for (const f of FACADES) {
       const canvas = document.createElement('canvas');
@@ -73,10 +79,14 @@ export class OverlayLayer {
       const [cu, cv] = polygonCentroid(r.polygon);
       const relief = this.reliefOf(r.facade);
       const offset = ANCHOR_OFFSET + (relief ? Math.max(0, reliefAt(relief.pixels, cu, cv)) * relief.depthM : 0);
+      const onWall = this.locate(r.facade, cu, cv);
+      const normal = new Vector3(...(onWall ? onWall.normal : facadeFrame(r.facade, this.dims).normal));
       const anchor: RegionAnchor = {
         facade: r.facade,
-        point: new Vector3(...uvToWorld(r.facade, this.dims, cu, cv, offset)),
-        normal: new Vector3(...facadeFrame(r.facade, this.dims).normal),
+        point: onWall
+          ? new Vector3(...onWall.point).addScaledVector(normal, offset)
+          : new Vector3(...uvToWorld(r.facade, this.dims, cu, cv, offset)),
+        normal,
         area: Math.abs(polygonArea(r.polygon)) * facadeWidth(r.facade, this.dims) * this.dims.height,
       };
       const list = this.anchorsById.get(r.apartmentId) ?? [];

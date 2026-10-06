@@ -324,3 +324,28 @@ test.describe('depth and the plain view', () => {
     expect((await events(page)).filter((e) => e.type === 'apartment-select').map((e) => e.detail?.apartmentId)).toEqual(['apt-1203']);
   });
 });
+
+test.describe('building shapes', () => {
+  test('an L-shaped building opens and selects an apartment on its recessed walls', async ({ page, isMobile }) => {
+    await page.goto('demo/index.html');
+    await waitReady(page);
+    await page.evaluate(() => {
+      const el = document.querySelector('abb-building-360');
+      if (!el?.building) return;
+      const cfg = structuredClone(el.building);
+      const { width, depth, height } = cfg.dimensions;
+      // The back-right quarter is missing: the right wall steps in to x = 12 m behind d = 10 m.
+      cfg.massing = { blocks: [{ polygon: [[0, 0], [width, 0], [width, 10], [12, 10], [12, depth], [0, depth]], height }] };
+      el.config = cfg;
+    });
+    await page.waitForFunction(
+      () => (window as unknown as { hostEvents: HostEvent[] }).hostEvents.filter((e) => e.type === 'ready').length === 2,
+    );
+    // Stack E wraps the north-east corner: on the L both its walls are the recessed ones.
+    const pos = await aimAt(page, 'apt-1105');
+    await tap(page, pos.x, pos.y, isMobile);
+    await expect(widget(page).locator('.panel h2')).toHaveText('Apartment 1105');
+    await widget(page).locator('.panel').getByRole('button', { name: 'Select apartment' }).click();
+    expect((await events(page)).filter((e) => e.type === 'apartment-select').map((e) => e.detail?.apartmentId)).toEqual(['apt-1105']);
+  });
+});

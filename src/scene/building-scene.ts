@@ -2,6 +2,7 @@ import {
   BoxGeometry,
   CanvasTexture,
   CircleGeometry,
+  Color,
   DirectionalLight,
   HemisphereLight,
   Mesh,
@@ -11,8 +12,11 @@ import {
   PlaneGeometry,
   SRGBColorSpace,
   Scene,
+  Shape,
+  ShapeGeometry,
   ShadowMaterial,
   TextureLoader,
+  Vector2,
   Vector3,
   WebGLRenderer,
   type Intersection,
@@ -20,12 +24,13 @@ import {
   type Texture,
 } from 'three';
 import type { ReliefPixels } from '../core/depth';
-import { localToUv } from '../core/facade-frame';
+import { applyH, squareToQuad } from '../core/homography';
+import { blocksOf, elevationUv, facadeToWorld, occluderHeight, wallsOf, type Block } from '../core/massing';
 import { FACADES, type Apartment, type BuildingConfig, type Corners, type FacadeId } from '../core/types';
 import { CameraRig } from './camera-rig';
 import { OverlayLayer, type OverlayState } from './overlay-texture';
 import { attachPicker, type PointerPoint } from './picking';
-import { createWall, pickProxy, setWallOverlay, writeWallUvs, type WallMesh, type WallRelief } from './wall-mesh';
+import { createWall, pickProxy, setWallOverlay, wallsShowing, writeWallUvs, type WallMesh, type WallRelief } from './wall-mesh';
 
 export interface BuildingSceneOptions {
   reducedMotion?: boolean;
@@ -39,16 +44,20 @@ const PARAPET_COLOR = 0xcfcac2;
 const MAX_ANISOTROPY = 8;
 
 /**
- * Lighting. The photos already contain their own light and shade, so these are gentle: the sky
- * light brings a wall facing the camera close to the photo's own brightness, and the sun adds
- * shading on relief and cast shadows without washing out or double-darkening the image.
+ * Lighting. The photos already contain their own light and shade, so the sky light keeps every
+ * wall readable, a raking sun brings out relief and casts shadows, and a soft fill from the
+ * opposite side keeps the walls the sun never reaches from going dull. Together a wall in full
+ * sun lands a little above the photo's own brightness and one in shade a little below.
  * (three's lights are physical: a light of intensity π lights a surface facing it at 100 %.)
  */
-const SKY_INTENSITY = Math.PI * 0.6;
-const SUN_INTENSITY = Math.PI * 0.7;
+const SKY_INTENSITY = Math.PI * 0.62;
+const SUN_INTENSITY = Math.PI * 0.62;
+const FILL_INTENSITY = Math.PI * 0.22;
 /** Sun from the front-left and above, matching the demo renders (front and left walls lit). */
 const SUN_DIRECTION = new Vector3(-0.75, 0.6, 0.6).normalize();
-const SHADOW_OPACITY = 0.38;
+/** Fill from the back-right, low and shadowless. */
+const FILL_DIRECTION = new Vector3(0.7, 0.3, -0.65).normalize();
+const SHADOW_OPACITY = 0.28;
 
 function canvasTexture(draw: (ctx: CanvasRenderingContext2D, size: number) => void, size = 256): CanvasTexture {
   const canvas = document.createElement('canvas');
@@ -83,9 +92,42 @@ async function loadReliefPixels(url: string): Promise<ReliefPixels | null> {
 }
 
 /**
- * The 3D building: four photo-textured walls (pushed in and out where a relief map exists), a
- * roof with a parapet, a ground that takes the building's shadow, and the apartment colours
- * painted on the walls. Renders only when something changes. Owns its canvas and WebGL context;
+ * The average colour of the wall inside its corners (linear), for wall parts no photo shows.
+ * Null when the image can't be read (a cross-origin image without CORS, say).
+ */
+function photoTone(texture: Texture, corners: Corners): Color | null {
+  const image = texture.image as CanvasImageSource | undefined;
+  const h = squareToQuad(corners);
+  if (!image || !h) return null;
+  const size = 64;
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = size;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  if (!ctx) return null;
+  try {
+    ctx.drawImage(image, 0, 0, size, size);
+    const px = ctx.getImageData(0, 0, size, size).data;
+    let r = 0, g = 0, b = 0, n = 0;
+    for (let j = 0; j < 12; j++) {
+      for (let i = 0; i < 12; i++) {
+        const [x, y] = applyH(h, (i + 0.5) / 12, (j + 0.5) / 12);
+        const k = (Math.min(size - 1, Math.max(0, Math.floor(y * size))) * size + Math.min(size - 1, Math.max(0, Math.floor(x * size)))) * 4;
+        r += px[k] ?? 0;
+        g += px[k + 1] ?? 0;
+        b += px[k + 2] ?? 0;
+        n++;
+      }
+    }
+    return new Color().setRGB(r / n / 255, g / n / 255, b / n / 255, SRGBColorSpace);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The 3D building: its blocks (a box unless the config gives a shape) with photo-textured walls
+ * (pushed in and out where a relief map exists), flat roofs with parapets, a ground that takes the
+ * building's shadow, and the apartment colours painted on the walls. Renders only when something changes. Owns its canvas and WebGL context;
  * call dispose() to release both.
  */
 export class BuildingScene extends EventTarget {
@@ -98,7 +140,9 @@ export class BuildingScene extends EventTarget {
   private readonly detachPicker: () => void;
   private readonly textures = new Map<string, Promise<Texture | null>>();
   private readonly reliefs = new Map<string, Promise<ReliefPixels | null>>();
-  private walls: Record<FacadeId, WallMesh> | null = null;
+  private walls: WallMesh[] = [];
+  private blocks: Block[] = [];
+  private readonly tones = new Map<string, Color | null>();
   private wallReliefs: Partial<Record<FacadeId, WallRelief>> = {};
   private extras: Mesh[] = [];
   private overlays: OverlayLayer | null = null;
@@ -126,6 +170,9 @@ export class BuildingScene extends EventTarget {
     this.renderer.shadowMap.type = PCFShadowMap;
 
     this.scene.add(new HemisphereLight(0xffffff, 0xd6d1c7, SKY_INTENSITY));
+    const fill = new DirectionalLight(0xffffff, FILL_INTENSITY);
+    fill.position.copy(FILL_DIRECTION);
+    this.scene.add(fill);
     this.sun.castShadow = true;
     const small = Math.min(window.innerWidth, window.innerHeight) < 600;
     this.sun.shadow.mapSize.set(small ? 1024 : 2048, small ? 1024 : 2048);
@@ -143,7 +190,7 @@ export class BuildingScene extends EventTarget {
     this.detachPicker = attachPicker(
       this.canvas,
       this.rig.camera,
-      () => (this.walls ? FACADES.map((f) => pickProxy((this.walls as Record<FacadeId, WallMesh>)[f])) : []),
+      () => this.walls.map((w) => pickProxy(w)),
       (hit) => this.apartmentAtHit(hit),
       {
         pick: (id, at) => this.emit('pick', { id, ...at }),
@@ -186,10 +233,11 @@ export class BuildingScene extends EventTarget {
     this.requestRender();
   }
 
-  /** Editor live preview: re-maps one wall's texture without reloading anything. */
+  /** Editor live preview: re-maps one facade's photo on its walls without reloading anything. */
   setCorners(f: FacadeId, corners: Corners): void {
-    const wall = this.walls?.[f];
-    if (wall?.material.map && writeWallUvs(wall.geometry, corners)) this.requestRender();
+    let changed = false;
+    for (const wall of wallsShowing(this.walls, f)) if (wall.material.map && writeWallUvs(wall.geometry, corners)) changed = true;
+    if (changed) this.requestRender();
   }
 
   /**
@@ -263,6 +311,7 @@ export class BuildingScene extends EventTarget {
     for (const p of this.textures.values()) void p.then((t) => t?.dispose());
     this.textures.clear();
     this.reliefs.clear();
+    this.tones.clear();
     this.sun.shadow.dispose();
     this.canvas.removeEventListener('webglcontextlost', this.onContextLost);
     this.canvas.removeEventListener('webglcontextrestored', this.onContextRestored);
@@ -280,12 +329,16 @@ export class BuildingScene extends EventTarget {
     else cam.setViewOffset(w, h, right / 2, bottom / 2, w, h);
   }
 
-  /** A ray hit on a wall's flat picking plane → facade (u, v) → the apartment drawn there. */
+  /**
+   * A ray hit on a wall's flat picking surface → facade (u, v) → the apartment drawn there.
+   * Nothing where the wall is hidden in its photo (it shows no apartments there).
+   */
   private apartmentAtHit(hit: Intersection): string | null {
     const f = hit.object.userData.facade as FacadeId | undefined;
     if (!f || !this.config || !this.overlays) return null;
-    const local = hit.object.worldToLocal(hit.point.clone());
-    const [u, v] = localToUv(f, this.config.dimensions, local.x, local.y);
+    const p = hit.point;
+    if (p.y <= occluderHeight(f, [p.x, p.z], this.blocks) + 1e-3) return null;
+    const [u, v] = elevationUv(f, [p.x, p.y, p.z], this.config.dimensions);
     return this.overlays.apartmentAt(f, u, v);
   }
 
@@ -342,8 +395,16 @@ export class BuildingScene extends EventTarget {
       this.textures.delete(url);
       void texture.then((t) => t?.dispose());
     }
+    this.tones.clear();
     const reliefs = new Set(FACADES.map((f) => config.facades[f].relief?.image));
     for (const url of this.reliefs.keys()) if (!reliefs.has(url)) this.reliefs.delete(url);
+  }
+
+  /** The photo's wall tone for these corners, cached. */
+  private tone(map: Texture, corners: Corners): Color | null {
+    const key = `${map.uuid}:${JSON.stringify(corners)}`;
+    if (!this.tones.has(key)) this.tones.set(key, photoTone(map, corners));
+    return this.tones.get(key) ?? null;
   }
 
   private build(config: BuildingConfig, maps: (Texture | null)[], reliefs: (ReliefPixels | null)[]): void {
@@ -355,34 +416,49 @@ export class BuildingScene extends EventTarget {
       const depthM = config.facades[f].relief?.depthM ?? 0;
       if (pixels && depthM > 0) this.wallReliefs[f] = { pixels, depthM };
     });
+    const blocks = blocksOf(config);
+    const shapes = wallsOf(blocks);
+    this.blocks = blocks;
 
-    this.overlays = new OverlayLayer(d, (f) => this.wallReliefs[f] ?? null);
-    const walls = {} as Record<FacadeId, WallMesh>;
-    FACADES.forEach((f, i) => {
-      walls[f] = createWall(f, d, config.facades[f].corners, maps[i] ?? null, this.wallReliefs[f] ?? null);
-      setWallOverlay(walls[f], (this.overlays as OverlayLayer).texture(f));
-      this.scene.add(walls[f]);
+    this.overlays = new OverlayLayer(
+      d,
+      (f) => this.wallReliefs[f] ?? null,
+      (f, u, v) => facadeToWorld(f, u, v, shapes, blocks, d),
+    );
+    const small = Math.min(window.innerWidth, window.innerHeight) < 600;
+    this.walls = shapes.map((shape, i) => {
+      const f = shape.facade;
+      const k = FACADES.indexOf(f);
+      const map = maps[k] ?? null;
+      const corners = config.facades[f].corners;
+      const wall = createWall(shape, i, d, blocks, { map, corners, relief: this.wallReliefs[f] ?? null, tone: map ? this.tone(map, corners) : null }, small ? 0.6 : 1);
+      setWallOverlay(wall, (this.overlays as OverlayLayer).texture(f));
+      this.scene.add(wall);
+      return wall;
     });
-    this.walls = walls;
     this.overlays.build(config.apartments, config.regions);
     this.overlays.setState(this.overlayState);
 
-    // Roof just below a parapet rim, so the top edge has thickness.
+    // Each block's roof just below a parapet rim, so the top edge has thickness.
     const parapetH = 0.45;
     const parapetT = 0.3;
-    const roof = new Mesh(new PlaneGeometry(d.width, d.depth), new MeshStandardMaterial({ color: ROOF_COLOR, roughness: 1 }));
-    roof.rotation.x = -Math.PI / 2;
-    roof.position.y = d.height - 0.05;
-    roof.receiveShadow = true;
+    const roofMaterial = new MeshStandardMaterial({ color: ROOF_COLOR, roughness: 1 });
     const parapetMaterial = new MeshStandardMaterial({ color: PARAPET_COLOR, roughness: 1 });
-    const rims: Mesh[] = [
-      [d.width, parapetT, 0, d.depth / 2 - parapetT / 2],
-      [d.width, parapetT, 0, -d.depth / 2 + parapetT / 2],
-      [parapetT, d.depth, d.width / 2 - parapetT / 2, 0],
-      [parapetT, d.depth, -d.width / 2 + parapetT / 2, 0],
-    ].map(([sx, sz, x, z]) => {
-      const rim = new Mesh(new BoxGeometry(sx, parapetH, sz), parapetMaterial);
-      rim.position.set(x as number, d.height + parapetH / 2 - 0.05, z as number);
+    const roofs: Mesh[] = blocks.map((b) => {
+      // ShapeGeometry lies in X-Y; rotating it flat maps (X, Y) to (X, −Z), hence the −Z here.
+      const roof = new Mesh(new ShapeGeometry(new Shape(b.points.map(([x, z]) => new Vector2(x, -z)))), roofMaterial);
+      roof.rotation.x = -Math.PI / 2;
+      roof.position.y = b.height - 0.05;
+      roof.receiveShadow = true;
+      return roof;
+    });
+    const rims: Mesh[] = shapes.map((w) => {
+      const rim = new Mesh(new BoxGeometry(w.length + parapetT, parapetH, parapetT), parapetMaterial);
+      const [ax, az] = w.a;
+      const [bx, bz] = w.b;
+      // Centred on the wall, just inside it, turned to run along it.
+      rim.position.set((ax + bx) / 2 - (w.normal[0] * parapetT) / 2, w.height + parapetH / 2 - 0.05, (az + bz) / 2 - (w.normal[1] * parapetT) / 2);
+      rim.rotation.y = Math.atan2(-(bz - az), bx - ax);
       rim.castShadow = true;
       rim.receiveShadow = true;
       return rim;
@@ -408,16 +484,29 @@ export class BuildingScene extends EventTarget {
     ground.position.y = -0.03;
 
     // Soft contact darkening right around the base (ambient occlusion, not a cast shadow).
+    const spanX = d.width * 1.3;
+    const spanZ = d.depth * 1.3;
     const contact = new Mesh(
-      new PlaneGeometry(d.width * 1.3, d.depth * 1.3),
+      new PlaneGeometry(spanX, spanZ),
       new MeshBasicMaterial({
         map: canvasTexture((ctx, s) => {
-          // Draw the rectangle off-canvas and keep only its blurred shadow (works in every browser).
+          // Draw the footprint off-canvas and keep only its blurred shadow (works in every browser).
           ctx.shadowColor = 'rgba(30, 36, 44, 0.5)';
           ctx.shadowBlur = s * 0.05;
           ctx.shadowOffsetX = s;
           ctx.fillStyle = '#000';
-          ctx.fillRect(s * 0.12 - s, s * 0.12, s * 0.76, s * 0.76);
+          for (const b of blocks) {
+            ctx.beginPath();
+            b.points.forEach(([x, z], i) => {
+              // The plane's texture top is −Z (the back) once it is laid flat.
+              const cx = (x / spanX + 0.5) * s - s;
+              const cy = (z / spanZ + 0.5) * s;
+              if (i === 0) ctx.moveTo(cx, cy);
+              else ctx.lineTo(cx, cy);
+            });
+            ctx.closePath();
+            ctx.fill();
+          }
         }),
         transparent: true,
         depthWrite: false,
@@ -432,7 +521,7 @@ export class BuildingScene extends EventTarget {
     shadowCatcher.position.y = -0.01;
     shadowCatcher.receiveShadow = true;
 
-    this.extras = [roof, ...rims, ground, contact, shadowCatcher];
+    this.extras = [...roofs, ...rims, ground, contact, shadowCatcher];
     this.scene.add(...this.extras);
     this.placeSun(config);
   }
@@ -460,7 +549,7 @@ export class BuildingScene extends EventTarget {
   private clearBuilding(): void {
     this.overlays?.dispose();
     this.overlays = null;
-    const meshes: Mesh[] = [...(this.walls ? Object.values(this.walls) : []), ...this.extras];
+    const meshes: Mesh[] = [...this.walls, ...this.extras];
     const materials = new Set<Material>();
     for (const m of meshes) {
       m.removeFromParent();
@@ -480,7 +569,7 @@ export class BuildingScene extends EventTarget {
       if (overlay?.value && !(overlay.value instanceof CanvasTexture)) overlay.value.dispose();
       material.dispose();
     }
-    this.walls = null;
+    this.walls = [];
     this.extras = [];
   }
 

@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { deriveDimensions, quadAspect } from '../src/core/dimensions';
-import type { BuildingConfig, Corners, FacadeConfig, FacadeId, UnitCell } from '../src/core/types';
+import type { BuildingConfig, Corners, FacadeConfig, FacadeId, Massing, UnitCell, Vec2 } from '../src/core/types';
 import { createUnits, updateApartment, type WithEditor } from '../src/editor/state';
 
 /**
@@ -40,6 +40,31 @@ const DIVIDERS: Record<FacadeId, number[]> = {
   back: [0.36, 0.645],
   left: [0.29, 0.41, 0.63],
 };
+
+/**
+ * The building's shape: the photos show narrow full-height slots (the sky shows through them at
+ * the top): one in the front wall and one in each side wall at the same distance back (the left
+ * and right photos agree to 0.002). Their u-ranges are measured from the sky in the photos; how
+ * deep they go isn't visible in any photo, so SLOT_DEPTH_M is an estimate.
+ */
+const FRONT_SLOT_U: [number, number] = [0.546, 0.627];
+/** On the right elevation (u = d / depth); the left one mirrors it. */
+const SIDE_SLOT_U: [number, number] = [0.597, 0.695];
+const SLOT_DEPTH_M = 1.8;
+
+function demoMassing(width: number, depth: number, height: number): Massing {
+  const r = (n: number) => round(n, 2);
+  const [f0, f1] = FRONT_SLOT_U.map((u) => r(u * width)) as [number, number];
+  const [s0, s1] = SIDE_SLOT_U.map((u) => r(u * depth)) as [number, number];
+  const t = SLOT_DEPTH_M;
+  const polygon: Vec2[] = [
+    [0, 0], [f0, 0], [f0, t], [f1, t], [f1, 0], [width, 0],
+    [width, s0], [r(width - t), s0], [r(width - t), s1], [width, s1],
+    [width, depth], [0, depth],
+    [0, s1], [t, s1], [t, s0], [0, s0],
+  ];
+  return { blocks: [{ polygon, height }] };
+}
 
 interface Stack {
   key: string;
@@ -99,12 +124,15 @@ export function buildDemoConfig(): WithEditor {
   }
   const { dimensions } = deriveDimensions(height, aspects);
 
+  const width = round(dimensions.width, 2);
+  const depth = round(dimensions.depth, 2);
   const base: BuildingConfig = {
     schemaVersion: 1,
     id: 'demo-residence',
     name: 'Demo residence',
     sampleData: true,
-    dimensions: { width: round(dimensions.width, 2), depth: round(dimensions.depth, 2), height },
+    dimensions: { width, depth, height },
+    massing: demoMassing(width, depth, height),
     facades,
     apartments: [],
     regions: [],
