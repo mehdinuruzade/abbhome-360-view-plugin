@@ -74,6 +74,11 @@ function blankConfig(): WithEditor {
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
+/** Local photos are blob: URLs; release them once nothing shows them. */
+function revokeLocal(src: string) {
+  if (src.startsWith('blob:')) URL.revokeObjectURL(src);
+}
+
 /** The editor page: four photos in, a building.json out. */
 export class AbbEditor extends LitElement {
   static override properties = {
@@ -137,7 +142,18 @@ export class AbbEditor extends LitElement {
   }
 
   private setImage(f: FacadeId, image: ImageRef) {
+    const old = this._doc.images[f].src;
     this._doc = { ...this._doc, images: { ...this._doc.images, [f]: image } };
+    if (old && old !== image.src) revokeLocal(old);
+  }
+
+  /** Replaces the whole document, releasing the local photos of the old one. */
+  private replaceDoc(doc: EditorDocument) {
+    for (const f of FACADES) {
+      const old = this._doc.images[f].src;
+      if (old && !FACADES.some((g) => doc.images[g].src === old)) revokeLocal(old);
+    }
+    this._doc = doc;
   }
 
   /** The config with displayable image sources, for the 3D preview and the buyer preview. */
@@ -210,7 +226,7 @@ export class AbbEditor extends LitElement {
   private newBuilding() {
     if (this.config.apartments.length && !confirm('Start a new building? This clears the current one from the editor.')) return;
     clearDraft();
-    this._doc = { config: blankConfig(), images: emptyImages() };
+    this.replaceDoc({ config: blankConfig(), images: emptyImages() });
     this._selection = [];
     this._selectedApartment = null;
     this._step = 'photos';
@@ -224,7 +240,7 @@ export class AbbEditor extends LitElement {
       const res = await fetch(url);
       if (!res.ok) throw new Error(String(res.status));
       const { doc } = importConfig(await res.json(), url);
-      this._doc = doc;
+      this.replaceDoc(doc);
       this._pattern = doc.config.editor.numberPattern ?? '{floor}{nn}';
       this._selection = [];
       this._selectedApartment = null;
@@ -244,7 +260,7 @@ export class AbbEditor extends LitElement {
     try {
       const { doc, warnings } = importConfig(JSON.parse(await file.text()));
       const missing = FACADES.filter((f) => doc.images[f].ref && !doc.images[f].src);
-      this._doc = doc;
+      this.replaceDoc(doc);
       this._pattern = doc.config.editor.numberPattern ?? '{floor}{nn}';
       this._selection = [];
       this._selectedApartment = null;
@@ -404,7 +420,14 @@ export class AbbEditor extends LitElement {
 
   private onDividerRemove(e: CustomEvent<{ index: number }>) {
     const index = e.detail.index;
-    this.setConfig(removeDivider(this.config, this._facade, index));
+    const { config, conflicts } = removeDivider(this.config, this._facade, index);
+    if (conflicts.length) {
+      const numbers = conflicts.map((id) => this.config.apartments.find((a) => a.id === id)?.number ?? id);
+      const shown = numbers.slice(0, 4).join(', ') + (numbers.length > 4 ? ` and ${numbers.length - 4} more` : '');
+      this._message = `This divider separates apartments (${shown}). Delete the apartments on one side first.`;
+      return;
+    }
+    this.setConfig(config);
     this._selection = this._selection
       .map((c) => (c.facade !== this._facade || c.col <= index ? c : { ...c, col: c.col - 1 }))
       .filter((c, i, all) => all.findIndex((x) => x.facade === c.facade && x.col === c.col) === i);

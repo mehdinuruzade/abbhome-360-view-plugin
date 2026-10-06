@@ -52,11 +52,21 @@ export class CameraRig {
     });
     // OrbitControls sets touch-action: none; restore vertical page scrolling.
     canvas.style.touchAction = 'pan-y';
-    const filter = (e: WheelEvent) => {
-      if (!e.ctrlKey && !e.metaKey) e.stopPropagation();
+    // Zoom only with Ctrl/⌘ (trackpad pinches arrive as ctrl + wheel). For a plain wheel,
+    // OrbitControls returns without preventDefault, so the page scrolls and the host page
+    // still receives the event. The flag goes back on after OrbitControls has seen the event.
+    const beforeControls = (e: WheelEvent) => {
+      c.enableZoom = e.ctrlKey || e.metaKey;
     };
-    wheelHost.addEventListener('wheel', filter, { capture: true });
-    this.removeWheelFilter = () => wheelHost.removeEventListener('wheel', filter, { capture: true });
+    const afterControls = () => {
+      c.enableZoom = true;
+    };
+    wheelHost.addEventListener('wheel', beforeControls, { capture: true, passive: true });
+    canvas.addEventListener('wheel', afterControls, { passive: true });
+    this.removeWheelFilter = () => {
+      wheelHost.removeEventListener('wheel', beforeControls, { capture: true });
+      canvas.removeEventListener('wheel', afterControls);
+    };
     this.controls = c;
   }
 

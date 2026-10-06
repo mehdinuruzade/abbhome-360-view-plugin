@@ -52,6 +52,38 @@ describe('parseConfig', () => {
     expect(config.apartments[0]?.view).toBe('sea');
   });
 
+  it('keeps unknown fields in nested objects too (regions, dimensions, corners, editor data)', () => {
+    const raw = minimal({
+      dimensions: { width: 30, depth: 20, height: 40, rotationDeg: 12 },
+      editor: {
+        floorLines: [0, 1],
+        dividers: { front: [0.5] },
+        units: { a1: { level: 0, cells: [{ facade: 'front', col: 0, note: 'x' }], stack: 'A' } },
+        tool: 'v2',
+      },
+    });
+    (raw.regions[0] as Record<string, unknown>).label = 'balcony';
+    (raw.facades.front.corners as Record<string, unknown>).source = 'survey';
+    const { config } = parseConfig(raw);
+    expect(config.regions[0]?.label).toBe('balcony');
+    expect(config.dimensions.rotationDeg).toBe(12);
+    expect(config.facades.front.corners.source).toBe('survey');
+    expect(config.editor?.tool).toBe('v2');
+    expect(config.editor?.units.a1?.stack).toBe('A');
+    expect(config.editor?.units.a1?.cells[0]?.note).toBe('x');
+  });
+
+  it('accepts numeric apartment ids in apartments and regions alike', () => {
+    const raw = minimal({
+      apartments: [{ id: 1203, number: 1203, floor: 12, status: 'available' }],
+      regions: [{ apartmentId: 1203, facade: 'front', polygon: [[0, 0], [1, 0], [1, 1]] }],
+    });
+    const { config, warnings } = parseConfig(raw);
+    expect(config.apartments[0]?.id).toBe('1203');
+    expect(config.regions.map((r) => r.apartmentId)).toEqual(['1203']);
+    expect(warnings).toEqual([]);
+  });
+
   it('keeps an unknown status as-is (the widget shows it as unavailable)', () => {
     const { config } = parseConfig(minimal());
     expect(config.apartments[1]?.status).toBe('on-hold');

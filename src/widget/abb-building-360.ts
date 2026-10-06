@@ -42,8 +42,9 @@ const COMPACT_MAX_WIDTH = 560;
  */
 export class AbbBuilding360 extends LitElement {
   static override properties = {
-    configUrl: { type: String, attribute: 'config-url' },
-    config: { attribute: false },
+    // Own accessors (below): switching building resets the host's live updates.
+    configUrl: { type: String, attribute: 'config-url', noAccessor: true },
+    config: { attribute: false, noAccessor: true },
     locale: { type: String },
     selectable: { attribute: false },
     _building: { state: true },
@@ -54,8 +55,6 @@ export class AbbBuilding360 extends LitElement {
     _hintVisible: { state: true },
   };
 
-  declare configUrl: string | undefined;
-  declare config: unknown;
   declare locale: string;
   declare selectable: string[];
   declare protected _building: BuildingConfig | null;
@@ -68,7 +67,12 @@ export class AbbBuilding360 extends LitElement {
   private scene: BuildingScene | null = null;
   private hostResize: ResizeObserver | null = null;
   private filter: ApartmentFilter | null = null;
-  private pendingPatches: ApartmentPatch[] = [];
+  private configUrlValue: string | undefined = undefined;
+  private configValue: unknown = undefined;
+  /** The host's live updates, merged by id and re-applied after every load (reloads included). */
+  private readonly livePatches = new Map<string, ApartmentPatch>();
+  /** The host switched building and the new one hasn't started loading yet. */
+  private switching = false;
   private loadToken = 0;
   private abort: AbortController | null = null;
   private hintTimer = 0;
@@ -87,6 +91,39 @@ export class AbbBuilding360 extends LitElement {
   }
 
   // ── Host API ─────────────────────────────────────────────────────────────────────────────
+
+  /** URL of building.json (attribute `config-url`). */
+  get configUrl(): string | undefined {
+    return this.configUrlValue;
+  }
+
+  set configUrl(value: string | undefined) {
+    const old = this.configUrlValue;
+    if (value === old) return;
+    this.configUrlValue = value;
+    this.buildingSwitched(old);
+    this.requestUpdate('configUrl', old);
+  }
+
+  /** A config object instead of a URL; takes priority over `configUrl`. */
+  get config(): unknown {
+    return this.configValue;
+  }
+
+  set config(value: unknown) {
+    const old = this.configValue;
+    if (value === old) return;
+    this.configValue = value;
+    this.buildingSwitched(old);
+    this.requestUpdate('config', old);
+  }
+
+  /** A different building: its live data starts fresh, and nothing applies to the old one. */
+  private buildingSwitched(old: unknown): void {
+    if (old === undefined || old === null) return;
+    this.livePatches.clear();
+    this.switching = true;
+  }
 
   /** The parsed config currently shown, or null. */
   get building(): BuildingConfig | null {
@@ -108,12 +145,14 @@ export class AbbBuilding360 extends LitElement {
     if (this.isCompact()) this.scene?.overview();
   }
 
-  /** Live updates from the host (status, price…), merged by id. Returns ids it didn't know. */
+  /**
+   * Live updates from the host (status, price…), merged by id. They also survive reloads.
+   * Returns the ids the shown building doesn't have; while a building is loading, the updates
+   * are kept for it and nothing is returned.
+   */
   setApartments(patches: ApartmentPatch[]): string[] {
-    if (!this._building) {
-      this.pendingPatches.push(...patches);
-      return [];
-    }
+    for (const p of patches) this.livePatches.set(p.id, { ...this.livePatches.get(p.id), ...p });
+    if (this._status !== 'ready' || this.switching || !this._building) return [];
     const { apartments, unknownIds } = applyPatches(this._building.apartments, patches);
     this._building = { ...this._building, apartments };
     this.scene?.updateApartments(apartments);
@@ -204,31 +243,33 @@ export class AbbBuilding360 extends LitElement {
     const token = ++this.loadToken;
     this.abort?.abort();
     const abort = (this.abort = new AbortController());
+    this.switching = false;
     this._selectedId = null;
     this._hover = null;
+    const url = this.configUrl;
+    let raw = this.config;
+    if ((raw === undefined || raw === null) && !url) {
+      this._status = 'idle';
+      return;
+    }
+    this._status = 'loading';
+    this._building = null;
     try {
-      let raw = this.config;
       let base = document.baseURI;
-      if (raw === undefined || raw === null) {
-        if (!this.configUrl) {
-          this._status = 'idle';
-          return;
-        }
-        this._status = 'loading';
-        base = new URL(this.configUrl, document.baseURI).href;
+      if ((raw === undefined || raw === null) && url) {
+        base = new URL(url, document.baseURI).href;
         const res = await fetch(base, { signal: abort.signal, credentials: 'same-origin' });
         if (!res.ok) throw new Error(`HTTP ${res.status} for ${base}`);
         raw = await res.json();
       }
-      this._status = 'loading';
       const { config, warnings } = parseConfig(raw, base);
       for (const w of warnings) console.warn(`[abb-building-360] ${w}`);
-      if (this.pendingPatches.length) {
-        config.apartments = applyPatches(config.apartments, this.pendingPatches).apartments;
-        this.pendingPatches = [];
-      }
+      config.apartments = this.withLivePatches(config.apartments);
       await scene.load(config, { signal: abort.signal });
       if (token !== this.loadToken) return;
+      // Updates that arrived while the photos were loading.
+      config.apartments = this.withLivePatches(config.apartments);
+      scene.updateApartments(config.apartments);
       this._building = config;
       this._status = 'ready';
       scene.setOverlayState({ selected: null, hover: null, visible: this.visibility() });
@@ -256,6 +297,10 @@ export class AbbBuilding360 extends LitElement {
 
   private apartment(id: string): Apartment | undefined {
     return this._building?.apartments.find((a) => a.id === id);
+  }
+
+  private withLivePatches(apartments: Apartment[]): Apartment[] {
+    return this.livePatches.size ? applyPatches(apartments, [...this.livePatches.values()]).apartments : apartments;
   }
 
   private visibility(): ((a: Apartment) => boolean) | null {

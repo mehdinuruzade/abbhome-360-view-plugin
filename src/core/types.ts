@@ -16,6 +16,7 @@ export interface Corners {
   tr: Vec2;
   br: Vec2;
   bl: Vec2;
+  [key: string]: unknown;
 }
 
 /** Metres. `width` runs along the front and back walls, `depth` along the sides. */
@@ -23,6 +24,7 @@ export interface Dimensions {
   width: number;
   depth: number;
   height: number;
+  [key: string]: unknown;
 }
 
 export interface FacadeConfig {
@@ -60,18 +62,21 @@ export interface Region {
   apartmentId: string;
   facade: FacadeId;
   polygon: Vec2[];
+  [key: string]: unknown;
 }
 
 /** One column of one facade. */
 export interface UnitCell {
   facade: FacadeId;
   col: number;
+  [key: string]: unknown;
 }
 
 /** How the editor built an apartment: a level band times one or more columns. */
 export interface EditorUnit {
   level: number;
   cells: UnitCell[];
+  [key: string]: unknown;
 }
 
 /** Editor-only data. The widget ignores it and reads `regions`. */
@@ -85,6 +90,7 @@ export interface EditorData {
   /** Apartment id to the cells it was created from. */
   units: Record<string, EditorUnit>;
   numberPattern?: string;
+  [key: string]: unknown;
 }
 
 export interface BuildingConfig {

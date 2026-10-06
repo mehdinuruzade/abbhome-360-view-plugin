@@ -1,3 +1,4 @@
+import { currencyDigits } from '../core/apartments';
 import type { Money } from '../core/types';
 
 /**
@@ -58,8 +59,7 @@ export function statusKey(status: string): MessageKey {
 /** Whole currency units (apartment prices don't need cents), in the currency's own minor unit. */
 export function formatPrice(money: Money, locale: string): string {
   try {
-    const digits = new Intl.NumberFormat('en', { style: 'currency', currency: money.currency }).resolvedOptions()
-      .maximumFractionDigits ?? 2;
+    const digits = currencyDigits(money.currency);
     return new Intl.NumberFormat(locale, {
       style: 'currency',
       currency: money.currency,

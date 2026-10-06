@@ -112,10 +112,25 @@ describe('editor grid model', () => {
   it('merges columns when a divider is removed and shifts later columns', () => {
     let c = addDivider(grid(), 'front', 0.75).config; // front columns: 0–0.5, 0.5–0.75, 0.75–1
     c = createUnits(c, { cells: [{ facade: 'front', col: 2 }], levels: [0] }).config;
-    const merged = removeDivider(c, 'front', 0);
+    const { config: merged, conflicts } = removeDivider(c, 'front', 0);
+    expect(conflicts).toEqual([]);
     expect(merged.editor.dividers.front).toEqual([0.75]);
     expect(merged.editor.units['apt-001']?.cells).toEqual([{ facade: 'front', col: 1 }]);
     expect(merged.regions[0]?.polygon[0]?.[0]).toBe(0.75);
+  });
+
+  it('refuses to remove a divider that separates two apartments', () => {
+    let c = grid(); // front split at 0.5
+    for (const col of [0, 1]) c = createUnits(c, { cells: [{ facade: 'front', col }], levels: [1] }).config;
+    const { config: same, conflicts } = removeDivider(c, 'front', 0);
+    expect(conflicts.sort()).toEqual(['apt-101', 'apt-102']);
+    expect(same).toBe(c);
+  });
+
+  it('numbers apartments even when the pattern has no index placeholder', () => {
+    let c = grid();
+    for (const col of [0, 1]) c = createUnits(c, { cells: [{ facade: 'front', col }], levels: [1], pattern: '{floor}' }).config;
+    expect(c.apartments.map((a) => a.number)).toEqual(['1', '1-2']);
   });
 
   it('clamps dragged dividers between their neighbours', () => {

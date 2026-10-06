@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   applyPatches,
+  currencyDigits,
   formatUnitNumber,
   isSelectable,
   matchesFilter,
@@ -55,6 +56,13 @@ describe('apartments', () => {
     expect(apartments[0]).toBe(list[0]);
     expect(list[1]?.status).toBe('available');
     expect(unknownIds).toEqual(['zz']);
+  });
+
+  it('knows how many decimals each currency has', () => {
+    expect(currencyDigits('AZN')).toBe(2);
+    expect(currencyDigits('JPY')).toBe(0);
+    expect(currencyDigits('KWD')).toBe(3);
+    expect(currencyDigits('not a code')).toBe(2);
   });
 
   it('formats unit numbers from a pattern', () => {

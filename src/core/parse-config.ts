@@ -59,7 +59,7 @@ function parseCorners(raw: unknown, path: string, warnings: string[]): Corners {
     const o = isObject(raw) ? raw : {};
     const c = { tl: parseVec2(o.tl), tr: parseVec2(o.tr), br: parseVec2(o.br), bl: parseVec2(o.bl) };
     if (c.tl && c.tr && c.br && c.bl) {
-      const corners: Corners = { tl: c.tl, tr: c.tr, br: c.br, bl: c.bl };
+      const corners: Corners = { ...o, tl: c.tl, tr: c.tr, br: c.br, bl: c.bl };
       if (squareToQuad(corners)) return corners;
     }
     warnings.push(`${path}: corners must be a convex tl, tr, br, bl quad; using the whole image`);
@@ -90,7 +90,7 @@ function parseDimensions(raw: unknown): Dimensions {
   ) {
     throw new ConfigError('dimensions need positive width, depth and height in metres');
   }
-  return { width, depth, height };
+  return { ...o, width, depth, height };
 }
 
 function parseMoney(raw: unknown): Money | null {
@@ -151,7 +151,9 @@ function parseRegion(raw: unknown, index: number, ids: Set<string>, warnings: st
     warnings.push(`regions[${index}] is not an object; skipped`);
     return null;
   }
-  const { apartmentId, facade } = raw;
+  const { facade } = raw;
+  // Apartment ids may be numbers in the source (they're read as strings), so region references may be too.
+  const apartmentId = typeof raw.apartmentId === 'number' ? String(raw.apartmentId) : raw.apartmentId;
   if (typeof apartmentId !== 'string' || !ids.has(apartmentId)) {
     warnings.push(`regions[${index}] points at an unknown apartment; skipped`);
     return null;
@@ -165,7 +167,7 @@ function parseRegion(raw: unknown, index: number, ids: Set<string>, warnings: st
     warnings.push(`regions[${index}] needs a polygon of at least 3 [u, v] points; skipped`);
     return null;
   }
-  return { apartmentId, facade, polygon: polygon as Vec2[] } satisfies Region;
+  return { ...raw, apartmentId, facade, polygon: polygon as Vec2[] } satisfies Region;
 }
 
 function numberList(v: unknown): number[] | null {
@@ -183,7 +185,7 @@ function parseEditor(raw: unknown, warnings: string[]): EditorData | undefined {
   const floorLines = numberList(raw.floorLines);
   if (!floorLines || floorLines.length < 2) return fail();
   const dividersRaw = isObject(raw.dividers) ? raw.dividers : {};
-  const dividers = {} as Record<FacadeId, number[]>;
+  const dividers = { ...dividersRaw } as Record<FacadeId, number[]>;
   for (const f of FACADES) dividers[f] = numberList(dividersRaw[f]) ?? [];
   const units: Record<string, EditorUnit> = {};
   if (isObject(raw.units)) {
@@ -192,10 +194,11 @@ function parseEditor(raw: unknown, warnings: string[]): EditorData | undefined {
       const cells = u.cells.filter(
         (c): c is UnitCell => isObject(c) && isFacadeId(c.facade) && isFiniteNumber(c.col),
       );
-      units[id] = { level: u.level, cells: cells.map((c) => ({ facade: c.facade, col: c.col })) };
+      units[id] = { ...u, level: u.level, cells: cells.map((c) => ({ ...c, facade: c.facade, col: c.col })) };
     }
   }
   return {
+    ...raw,
     floorLines: floorLines.sort((a, b) => a - b),
     baseLevel: isFiniteNumber(raw.baseLevel) ? raw.baseLevel : 0,
     dividers,

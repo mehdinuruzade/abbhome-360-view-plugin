@@ -204,3 +204,70 @@ test.describe('living inside a host page', () => {
     expect(warnings).toEqual([]);
   });
 });
+
+test.describe('live data from the host', () => {
+  test.skip(({ isMobile }) => isMobile, 'same code path on every viewport');
+
+  const statusOf = (page: Page, id: string) =>
+    page.evaluate((apartmentId) => document.querySelector('abb-building-360')?.building?.apartments.find((a) => a.id === apartmentId)?.status, id);
+  const readyCount = (page: Page) =>
+    page.evaluate(() => (window as unknown as { hostEvents: HostEvent[] }).hostEvents.filter((e) => e.type === 'ready').length);
+
+  test('updates sent while the photos are still loading are applied', async ({ page }) => {
+    await page.route('**/demo/assets/*.webp', async (route) => {
+      await new Promise((r) => setTimeout(r, 1500));
+      await route.continue();
+    });
+    await page.goto('demo/index.html');
+    await page.waitForFunction(() => document.querySelector('abb-building-360')?.shadowRoot?.querySelector('.state'));
+    await page.evaluate(() => document.querySelector('abb-building-360')?.setApartments([{ id: 'apt-1203', status: 'sold' }]));
+    await waitReady(page);
+    expect(await statusOf(page, 'apt-1203')).toBe('sold');
+  });
+
+  test('updates survive the widget being detached and re-attached', async ({ page }) => {
+    await page.goto('demo/index.html');
+    await waitReady(page);
+    await page.evaluate(() => document.querySelector('abb-building-360')?.setApartments([{ id: 'apt-1203', status: 'sold' }]));
+    await page.evaluate(async () => {
+      const el = document.querySelector('abb-building-360');
+      const parent = el?.parentElement;
+      if (!el || !parent) return;
+      el.remove();
+      await new Promise((r) => setTimeout(r, 50));
+      parent.prepend(el);
+    });
+    await expect.poll(() => readyCount(page)).toBe(2);
+    expect(await statusOf(page, 'apt-1203')).toBe('sold');
+  });
+
+  test('switching to another building starts its live data fresh', async ({ page }) => {
+    await page.goto('demo/index.html');
+    await waitReady(page);
+    const original = await statusOf(page, 'apt-1204');
+    const unknown = await page.evaluate(() => {
+      const el = document.querySelector('abb-building-360');
+      el?.setApartments([{ id: 'apt-1204', status: 'sold' }]);
+      if (el) el.configUrl = 'building.json?next';
+      return el?.setApartments([{ id: 'apt-1203', status: 'reserved' }]);
+    });
+    expect(unknown).toEqual([]);
+    await expect.poll(() => readyCount(page)).toBe(2);
+    expect(await statusOf(page, 'apt-1203')).toBe('reserved');
+    expect(await statusOf(page, 'apt-1204')).toBe(original);
+  });
+
+  test('wheel events over the widget still reach the host page', async ({ page }) => {
+    await page.goto('demo/index.html');
+    await waitReady(page);
+    await page.evaluate(() => {
+      (window as unknown as { wheels: number }).wheels = 0;
+      window.addEventListener('wheel', () => (window as unknown as { wheels: number }).wheels++);
+    });
+    const box = await widget(page).boundingBox();
+    if (!box) throw new Error('no widget box');
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.wheel(0, 200);
+    await expect.poll(() => page.evaluate(() => (window as unknown as { wheels: number }).wheels)).toBeGreaterThan(0);
+  });
+});

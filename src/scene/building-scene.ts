@@ -100,8 +100,19 @@ export class BuildingScene extends EventTarget {
       !this.config || JSON.stringify(this.config.dimensions) !== JSON.stringify(config.dimensions);
     this.config = config;
     this.build(config, maps);
+    this.releaseUnusedTextures(config);
     if (!opts.keepCamera || sizeChanged) this.rig.frame(config.dimensions, this.aspect());
     this.renderNow();
+  }
+
+  /** Frees GPU memory held for photos the current building no longer uses. */
+  private releaseUnusedTextures(config: BuildingConfig): void {
+    const used = new Set(FACADES.map((f) => config.facades[f].image));
+    for (const [url, texture] of this.textures) {
+      if (used.has(url)) continue;
+      this.textures.delete(url);
+      void texture.then((t) => t?.dispose());
+    }
   }
 
   setOverlayState(state: OverlayState): void {

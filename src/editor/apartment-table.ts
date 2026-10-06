@@ -1,4 +1,6 @@
 import { LitElement, css, html } from 'lit';
+import { live } from 'lit/directives/live.js';
+import { currencyDigits } from '../core/apartments';
 import { KNOWN_STATUSES, type Apartment, type ApartmentPatch } from '../core/types';
 
 export interface ApartmentChangeDetail {
@@ -6,13 +8,17 @@ export interface ApartmentChangeDetail {
   patch: Omit<ApartmentPatch, 'id'>;
 }
 
-const num = (v: string): number | undefined => {
-  if (v.trim() === '') return undefined;
-  const n = Number(v.replace(',', '.'));
-  return Number.isFinite(n) ? n : undefined;
-};
+const DEFAULT_CURRENCY = 'AZN';
 
-/** Inline editing of apartment data. Prices are entered in whole currency units, stored in minor units. */
+/** Empty → undefined (clears the field); anything else must be a number, or the edit is refused. */
+function parseOptional(text: string): { ok: true; value: number | undefined } | { ok: false } {
+  const t = text.trim();
+  if (!t) return { ok: true, value: undefined };
+  const n = Number(t.replace(',', '.'));
+  return Number.isFinite(n) ? { ok: true, value: n } : { ok: false };
+}
+
+/** Inline editing of apartment data. */
 export class ApartmentTable extends LitElement {
   static override properties = {
     apartments: { attribute: false },
@@ -32,6 +38,41 @@ export class ApartmentTable extends LitElement {
     this.dispatchEvent(
       new CustomEvent<ApartmentChangeDetail>('apartment-change', { detail: { id, patch }, bubbles: true, composed: true }),
     );
+  }
+
+  /** A numeric field: refused input snaps back to the stored value (inputs are bound with live()). */
+  private changeNumber(a: Apartment, key: 'rooms' | 'areaM2', e: Event) {
+    const parsed = parseOptional((e.target as HTMLInputElement).value);
+    if (parsed.ok) this.change(a.id, { [key]: parsed.value });
+    else this.requestUpdate();
+  }
+
+  /** Prices are typed in whole units of the row's currency and stored in its minor unit. */
+  private changePrice(a: Apartment, e: Event) {
+    const parsed = parseOptional((e.target as HTMLInputElement).value);
+    if (!parsed.ok) {
+      this.requestUpdate();
+      return;
+    }
+    const currency = a.price?.currency ?? this.defaultCurrency();
+    this.change(a.id, {
+      price: parsed.value === undefined ? undefined : { amountMinor: Math.round(parsed.value * 10 ** currencyDigits(currency)), currency },
+    });
+  }
+
+  /** Changing the currency keeps the amount as typed (e.g. 120 000 AZN → 120 000 USD). */
+  private changeCurrency(a: Apartment, e: Event) {
+    const currency = (e.target as HTMLInputElement).value.trim().toUpperCase();
+    if (!a.price || !/^[A-Z]{3}$/.test(currency) || currency === a.price.currency) {
+      this.requestUpdate();
+      return;
+    }
+    const whole = a.price.amountMinor / 10 ** currencyDigits(a.price.currency);
+    this.change(a.id, { price: { amountMinor: Math.round(whole * 10 ** currencyDigits(currency)), currency } });
+  }
+
+  private defaultCurrency(): string {
+    return this.apartments.find((x) => x.price)?.price?.currency ?? DEFAULT_CURRENCY;
   }
 
   private requestDelete(id: string) {
@@ -60,19 +101,20 @@ export class ApartmentTable extends LitElement {
           <tbody>
             ${rows.map(
               (a) => html`<tr class=${a.id === this.selected ? 'selected' : ''} data-id=${a.id}>
-                <td><input aria-label="Number" .value=${a.number} @change=${(e: Event) => this.change(a.id, { number: (e.target as HTMLInputElement).value.trim() || a.number })} /></td>
+                <td><input aria-label="Number" .value=${live(a.number)} @change=${(e: Event) => {
+                  const number = (e.target as HTMLInputElement).value.trim();
+                  if (number) this.change(a.id, { number });
+                  else this.requestUpdate();
+                }} /></td>
                 <td class="ro">${a.floor}</td>
-                <td><input aria-label="Rooms" inputmode="numeric" .value=${a.rooms?.toString() ?? ''} @change=${(e: Event) => this.change(a.id, { rooms: num((e.target as HTMLInputElement).value) })} /></td>
-                <td><input aria-label="Area" inputmode="decimal" .value=${a.areaM2?.toString() ?? ''} @change=${(e: Event) => this.change(a.id, { areaM2: num((e.target as HTMLInputElement).value) })} /></td>
+                <td><input aria-label="Rooms" inputmode="numeric" .value=${live(a.rooms?.toString() ?? '')} @change=${(e: Event) => this.changeNumber(a, 'rooms', e)} /></td>
+                <td><input aria-label="Area" inputmode="decimal" .value=${live(a.areaM2?.toString() ?? '')} @change=${(e: Event) => this.changeNumber(a, 'areaM2', e)} /></td>
                 <td>
                   <input
                     aria-label="Price"
-                    inputmode="numeric"
-                    .value=${a.price ? String(a.price.amountMinor / 100) : ''}
-                    @change=${(e: Event) => {
-                      const v = num((e.target as HTMLInputElement).value);
-                      this.change(a.id, { price: v === undefined ? undefined : { amountMinor: Math.round(v * 100), currency: a.price?.currency ?? 'AZN' } });
-                    }}
+                    inputmode="decimal"
+                    .value=${live(a.price ? String(a.price.amountMinor / 10 ** currencyDigits(a.price.currency)) : '')}
+                    @change=${(e: Event) => this.changePrice(a, e)}
                   />
                 </td>
                 <td>
@@ -80,11 +122,10 @@ export class ApartmentTable extends LitElement {
                     aria-label="Currency"
                     class="short"
                     maxlength="3"
-                    .value=${a.price?.currency ?? 'AZN'}
-                    @change=${(e: Event) => {
-                      const currency = (e.target as HTMLInputElement).value.trim().toUpperCase();
-                      if (a.price && /^[A-Z]{3}$/.test(currency)) this.change(a.id, { price: { ...a.price, currency } });
-                    }}
+                    ?disabled=${!a.price}
+                    title=${a.price ? 'Currency of this price' : 'Enter a price first'}
+                    .value=${live(a.price?.currency ?? this.defaultCurrency())}
+                    @change=${(e: Event) => this.changeCurrency(a, e)}
                   />
                 </td>
                 <td>
@@ -92,7 +133,7 @@ export class ApartmentTable extends LitElement {
                     ${[...new Set([...KNOWN_STATUSES, a.status])].map((s) => html`<option value=${s} ?selected=${s === a.status}>${s}</option>`)}
                   </select>
                 </td>
-                <td><input aria-label="Plan image URL" class="wide" .value=${a.planImage ?? ''} @change=${(e: Event) => this.change(a.id, { planImage: (e.target as HTMLInputElement).value.trim() || undefined })} /></td>
+                <td><input aria-label="Plan image URL" class="wide" .value=${live(a.planImage ?? '')} @change=${(e: Event) => this.change(a.id, { planImage: (e.target as HTMLInputElement).value.trim() || undefined })} /></td>
                 <td><button type="button" aria-label="Delete apartment ${a.number}" @click=${() => this.requestDelete(a.id)}>Delete</button></td>
               </tr>`,
             )}

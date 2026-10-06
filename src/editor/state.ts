@@ -22,6 +22,8 @@ import {
 
 /** Smallest band or column, as a fraction of the wall (about 20 cm on a 45 m wall). */
 export const MIN_GAP = 0.004;
+/** Upper bound when looking for a free apartment number on a floor. */
+const MAX_INDEX = 9999;
 
 export interface LevelBand {
   level: number;
@@ -238,14 +240,33 @@ export function moveDivider(config: BuildingConfig, f: FacadeId, index: number, 
   return regenerateRegions({ ...c, editor: { ...c.editor, dividers: { ...c.editor.dividers, [f]: ds } } });
 }
 
-/** Merges the two columns either side of the divider. */
-export function removeDivider(config: BuildingConfig, f: FacadeId, index: number): WithEditor {
+/** Apartments on either side of a divider at the same level: removing it would merge them into one cell. */
+export function dividerConflicts(e: EditorData, f: FacadeId, index: number): string[] {
+  const out = new Set<string>();
+  for (const level of new Set(Object.values(e.units).map((u) => u.level))) {
+    const left = unitAt(e, f, index, level);
+    const right = unitAt(e, f, index + 1, level);
+    if (left && right && left !== right) {
+      out.add(left);
+      out.add(right);
+    }
+  }
+  return [...out];
+}
+
+/**
+ * Merges the two columns either side of the divider. Refused (config unchanged, the apartments
+ * involved returned) when different apartments sit on either side at the same level.
+ */
+export function removeDivider(config: BuildingConfig, f: FacadeId, index: number): { config: WithEditor; conflicts: string[] } {
   const c = withEditor(config);
   const ds = c.editor.dividers[f];
-  if (index < 0 || index >= ds.length) return c;
+  if (index < 0 || index >= ds.length) return { config: c, conflicts: [] };
+  const conflicts = dividerConflicts(c.editor, f, index);
+  if (conflicts.length) return { config: c, conflicts };
   const dividers = { ...c.editor.dividers, [f]: ds.filter((_, i) => i !== index) };
   const units = remapCells(c.editor.units, f, (col) => [col <= index ? col : col - 1]);
-  return regenerateRegions({ ...c, editor: { ...c.editor, dividers, units } });
+  return { config: regenerateRegions({ ...c, editor: { ...c.editor, dividers, units } }), conflicts: [] };
 }
 
 // ── Apartments ─────────────────────────────────────────────────────────────────────────────
@@ -300,9 +321,20 @@ export function createUnits(
       skippedLevels.push(level);
       continue;
     }
+    // A pattern without an index placeholder ("{floor}") gives the same number every time;
+    // the second apartment on a floor then gets a suffix instead.
+    const first = formatUnitNumber(pattern, level, 1);
+    const indexed = first !== formatUnitNumber(pattern, level, 2);
     let index = 1;
-    let number = formatUnitNumber(pattern, level, index);
-    while (numbers.has(number)) number = formatUnitNumber(pattern, level, ++index);
+    let number = first;
+    while (numbers.has(number) && index < MAX_INDEX) {
+      index++;
+      number = indexed ? formatUnitNumber(pattern, level, index) : `${first}-${index}`;
+    }
+    if (numbers.has(number)) {
+      skippedLevels.push(level);
+      continue;
+    }
     let id = `apt-${number}`;
     for (let k = 2; ids.has(id); k++) id = `apt-${number}-${k}`;
     numbers.add(number);

@@ -62,6 +62,15 @@ export function applyPatches(
   return { apartments: next, unknownIds: [...byId.keys()].filter((id) => !seen.has(id)) };
 }
 
+/** Decimal places of a currency's minor unit: 2 for AZN, 0 for JPY, 3 for KWD (2 if unknown). */
+export function currencyDigits(currency: string): number {
+  try {
+    return new Intl.NumberFormat('en', { style: 'currency', currency }).resolvedOptions().maximumFractionDigits ?? 2;
+  } catch {
+    return 2;
+  }
+}
+
 export const DEFAULT_NUMBER_PATTERN = '{floor}{nn}';
 
 /** `{floor}` → level, `{n}` / `{nn}` / `{nnn}` → index zero-padded to 1, 2 or 3 digits. */

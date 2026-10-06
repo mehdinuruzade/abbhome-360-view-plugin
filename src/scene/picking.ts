@@ -29,6 +29,7 @@ export function attachPicker(
   const raycaster = new Raycaster();
   const ndc = new Vector2();
   let down: { id: number; x: number; y: number } | null = null;
+  const pointers = new Set<number>();
   let hoverFrame = 0;
   let lastHover: string | null = null;
 
@@ -55,17 +56,30 @@ export function attachPicker(
   };
 
   const onDown = (e: PointerEvent) => {
+    // A primary pointer starts a fresh gesture; drop anything stale.
+    if (e.isPrimary) pointers.clear();
+    pointers.add(e.pointerId);
+    // A second finger makes it a pinch, even if the first one hasn't moved.
+    if (pointers.size > 1) {
+      down = null;
+      return;
+    }
     if (e.button !== 0 || !e.isPrimary) return;
     down = { id: e.pointerId, x: e.clientX, y: e.clientY };
   };
   const onUp = (e: PointerEvent) => {
+    pointers.delete(e.pointerId);
     if (!down || down.id !== e.pointerId) return;
     const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y);
     down = null;
     if (moved <= TAP_SLOP_PX) on.pick(hitNear(e.clientX, e.clientY), { x: e.clientX, y: e.clientY });
   };
-  const onCancel = () => {
+  const onCancel = (e: PointerEvent) => {
+    pointers.delete(e.pointerId);
     down = null;
+  };
+  const onLostCapture = (e: PointerEvent) => {
+    pointers.delete(e.pointerId);
   };
   const onMove = (e: PointerEvent) => {
     if (e.pointerType !== 'mouse' || e.buttons !== 0) return;
@@ -90,6 +104,7 @@ export function attachPicker(
   canvas.addEventListener('pointerdown', onDown);
   canvas.addEventListener('pointerup', onUp);
   canvas.addEventListener('pointercancel', onCancel);
+  canvas.addEventListener('lostpointercapture', onLostCapture);
   canvas.addEventListener('pointermove', onMove);
   canvas.addEventListener('pointerleave', onLeave);
   return () => {
@@ -97,6 +112,7 @@ export function attachPicker(
     canvas.removeEventListener('pointerdown', onDown);
     canvas.removeEventListener('pointerup', onUp);
     canvas.removeEventListener('pointercancel', onCancel);
+    canvas.removeEventListener('lostpointercapture', onLostCapture);
     canvas.removeEventListener('pointermove', onMove);
     canvas.removeEventListener('pointerleave', onLeave);
   };
