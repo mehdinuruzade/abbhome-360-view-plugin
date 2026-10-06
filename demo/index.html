@@ -1,2 +1,51 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8" /><title>Example host page</title></head><body><script type="module" src="../src/widget/index.ts"></script></body></html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Example host page</title>
+    <link rel="stylesheet" href="./demo.css" />
+  </head>
+  <body>
+    <header class="top">
+      <a class="back" href="../index.html">Building 360 plugin</a>
+      <h1>Example host page</h1>
+      <p>
+        This page plays the part of the site that embeds the widget. Tap an apartment, then
+        <strong>Select apartment</strong>: the widget tells this page, and the page takes over.
+      </p>
+    </header>
+
+    <main class="layout">
+      <abb-building-360 id="building" config-url="building.json" locale="en"></abb-building-360>
+
+      <aside class="side">
+        <section class="card" aria-live="polite">
+          <h2>Selected by the buyer</h2>
+          <div id="selection" class="selection">
+            <p class="muted">Nothing selected yet.</p>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Host page controls</h2>
+          <p class="muted small">These call the widget's API, the way a host page would.</p>
+          <div class="buttons">
+            <button type="button" data-action="open">Open apartment 1203</button>
+            <button type="button" data-action="available">Only available</button>
+            <button type="button" data-action="three-rooms">Only 3 rooms</button>
+            <button type="button" data-action="clear">Clear filter</button>
+            <button type="button" data-action="sell">Mark 1203 as sold</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Events from the widget</h2>
+          <ol id="log" class="log"></ol>
+        </section>
+      </aside>
+    </main>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

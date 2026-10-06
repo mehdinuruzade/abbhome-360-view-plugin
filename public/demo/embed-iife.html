@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Classic script embed</title>
+    <style>
+      body { margin: 0; padding: 16px; font: 15px/1.5 system-ui, sans-serif; background: #f3f5f7; color: #1d2733; }
+      h1 { font-size: 18px; margin: 0 0 12px; }
+      abb-building-360 { max-width: 960px; margin: 0 auto; }
+    </style>
+  </head>
+  <body>
+    <h1>Classic script embed (built bundle, no build step on the host)</h1>
+    <abb-building-360 config-url="building.json"></abb-building-360>
+    <script src="../lib/abb-building-360.iife.js"></script>
+    <script>
+      window.hostEvents = [];
+      var el = document.querySelector('abb-building-360');
+      ['ready', 'error', 'apartment-preview', 'apartment-select'].forEach(function (type) {
+        el.addEventListener(type, function (e) {
+          window.hostEvents.push({ type: type, detail: e.detail });
+        });
+      });
+    </script>
+  </body>
+</html>

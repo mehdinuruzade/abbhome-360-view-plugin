@@ -1,0 +1,116 @@
+:root {
+  color-scheme: light;
+  --text: #1d2733;
+  --muted: #5b6673;
+  --surface: #ffffff;
+  --page: #f3f5f7;
+  --line: #dde2e7;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  font: 15px/1.5 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color: var(--text);
+  background: var(--page);
+}
+.top {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 24px 16px 8px;
+}
+.top h1 {
+  margin: 4px 0;
+  font-size: 24px;
+  line-height: 1.2;
+}
+.top p {
+  margin: 0;
+  max-width: 720px;
+  color: var(--muted);
+}
+.back {
+  color: var(--muted);
+  font-size: 13px;
+}
+.layout {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 16px;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1fr);
+}
+@media (min-width: 1000px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr) 340px;
+    align-items: start;
+  }
+}
+abb-building-360 {
+  width: 100%;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.08);
+}
+.side {
+  display: grid;
+  gap: 16px;
+}
+.card {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+.card h2 {
+  margin: 0 0 8px;
+  font-size: 15px;
+}
+.muted {
+  margin: 0;
+  color: var(--muted);
+}
+.small {
+  font-size: 13px;
+}
+.big {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+.selection .small {
+  margin: 8px 0 0;
+}
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+.buttons button {
+  min-height: 36px;
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--page);
+  color: inherit;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.buttons button:hover {
+  border-color: var(--text);
+}
+.log {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12px;
+  color: var(--muted);
+  max-height: 260px;
+  overflow: auto;
+  overflow-wrap: anywhere;
+}
+.log code {
+  color: var(--text);
+  font-weight: 600;
+}
