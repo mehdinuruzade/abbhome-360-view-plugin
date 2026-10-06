@@ -1,0 +1,2101 @@
+{
+  "schemaVersion": 1,
+  "id": "demo-residence",
+  "name": "Demo residence",
+  "sampleData": true,
+  "dimensions": {"width": 29.39, "depth": 22.79, "height": 42.43},
+  "facades": {
+    "front": {
+      "image": "assets/front.webp",
+      "corners": {"tl": [0.20011, 0.121], "tr": [0.80098, 0.121], "br": [0.80098, 0.92], "bl": [0.20011, 0.92]}
+    },
+    "right": {
+      "image": "assets/right.webp",
+      "corners": {
+        "tl": [0.24458, 0.101],
+        "tr": [0.73048, 0.101],
+        "br": [0.73048, 0.9355],
+        "bl": [0.24458, 0.9355]
+      }
+    },
+    "back": {
+      "image": "assets/back.webp",
+      "corners": {
+        "tl": [0.20445, 0.1285],
+        "tr": [0.79393, 0.1285],
+        "br": [0.79393, 0.914],
+        "bl": [0.20445, 0.914]
+      }
+    },
+    "left": {
+      "image": "assets/left.webp",
+      "corners": {
+        "tl": [0.26898, 0.1015],
+        "tr": [0.75488, 0.1015],
+        "br": [0.75488, 0.935],
+        "bl": [0.26898, 0.935]
+      }
+    }
+  },
+  "apartments": [
+    {
+      "id": "apt-101",
+      "number": "101",
+      "floor": 1,
+      "status": "available",
+      "rooms": 3,
+      "areaM2": 104.6,
+      "price": {"amountMinor": 18830000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-3-room.svg",
+      "extra": {"stack": "A", "position": "south-west corner"}
+    },
+    {
+      "id": "apt-201",
+      "number": "201",
+      "floor": 2,
+      "status": "sold",
+      "rooms": 3,
+      "areaM2": 104.6,
+      "price": {"amountMinor": 19140000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-3-room.svg",
+      "extra": {"stack": "A", "position": "south-west corner"}
+    },
+    {
+      "id": "apt-301",
+      "number": "301",
+      "floor": 3,
+      "status": "available",
+      "rooms": 3,
+      "areaM2": 104.6,
+      "price": {"amountMinor": 19460000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-3-room.svg",
+      "extra": {"stack": "A", "position": "south-west corner"}
+    },
+    {
+      "id": "apt-401",
+      "number": "401",
+      "floor": 4,
+      "status": "available",
+      "rooms": 3,
+      "areaM2": 104.6,
+      "price": {"amountMinor": 19770000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-3-room.svg",
+      "extra": {"stack": "A", "position": "south-west corner"}
+    },
+    {
+      "id": "apt-501",
+      "number": "501",
+      "floor": 5,
+      "status": "reserved",
+      "rooms": 3,
+      "areaM2": 104.6,
+      "price": {"amountMinor": 20080000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-3-room.svg",
+      "extra": {"stack": "A", "position": "south-west corner"}
+    },
+    {
+      "id": "apt-601",
+      "number": "601",
+      "floor": 6,
+      "status": "available",
+      "rooms": 3,
+      "areaM2": 104.6,
+      "price": {"amountMinor": 20400000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-3-room.svg",
+      "extra": {"stack": "A", "position": "south-west corner"}
+    },
+    {
+      "id": "apt-701",
+      "number": "701",
+      "floor": 7,
+      "status": "reserved",
+      "rooms": 3,
+      "areaM2": 104.6,
+      "price": {"amountMinor": 20710000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-3-room.svg",
+      "extra": {"stack": "A", "position": "south-west corner"}
+    },
+    {
+      "id": "apt-801",
+      "number": "801",
+      "floor": 8,
+      "status": "available",
+      "rooms": 3,
+      "areaM2": 104.6,
+      "price": {"amountMinor": 21020000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-3-room.svg",
+      "extra": {"stack": "A", "position": "south-west corner"}
+    },
+    {
+      "id": "apt-901",
+      "number": "901",
+      "floor": 9,
+      "status": "sold",
+      "rooms": 3,
+      "areaM2": 104.6,
+      "price": {"amountMinor": 21340000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-3-room.svg",
+      "extra": {"stack": "A", "position": "south-west corner"}
+    },
+    {
+      "id": "apt-1001",
+      "number": "1001",
+      "floor": 10,
+      "status": "available",
+      "rooms": 3,
+      "areaM2": 104.6,
+      "price": {"amountMinor": 21650000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-3-room.svg",
+      "extra": {"stack": "A", "position": "south-west corner"}
+    },
+    {
+      "id": "apt-1101",
+      "number": "1101",
+      "floor": 11,
+      "status": "sold",
+      "rooms": 3,
+      "areaM2": 104.6,
+      "price": {"amountMinor": 21970000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-3-room.svg",
+      "extra": {"stack": "A", "position": "south-west corner"}
+    },
+    {
+      "id": "apt-1201",
+      "number": "1201",
+      "floor": 12,
+      "status": "available",
+      "rooms": 3,
+      "areaM2": 104.6,
+      "price": {"amountMinor": 22280000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-3-room.svg",
+      "extra": {"stack": "A", "position": "south-west corner"}
+    },
+    {
+      "id": "apt-1301",
+      "number": "1301",
+      "floor": 13,
+      "status": "available",
+      "rooms": 3,
+      "areaM2": 104.6,
+      "price": {"amountMinor": 22590000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-3-room.svg",
+      "extra": {"stack": "A", "position": "south-west corner"}
+    },
+    {
+      "id": "apt-102",
+      "number": "102",
+      "floor": 1,
+      "status": "available",
+      "rooms": 2,
+      "areaM2": 68.4,
+      "price": {"amountMinor": 11490000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-2-room.svg",
+      "extra": {"stack": "B", "position": "south"}
+    },
+    {
+      "id": "apt-202",
+      "number": "202",
+      "floor": 2,
+      "status": "sold",
+      "rooms": 2,
+      "areaM2": 68.4,
+      "price": {"amountMinor": 11700000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-2-room.svg",
+      "extra": {"stack": "B", "position": "south"}
+    },
+    {
+      "id": "apt-302",
+      "number": "302",
+      "floor": 3,
+      "status": "available",
+      "rooms": 2,
+      "areaM2": 68.4,
+      "price": {"amountMinor": 11900000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-2-room.svg",
+      "extra": {"stack": "B", "position": "south"}
+    },
+    {
+      "id": "apt-402",
+      "number": "402",
+      "floor": 4,
+      "status": "sold",
+      "rooms": 2,
+      "areaM2": 68.4,
+      "price": {"amountMinor": 12110000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-2-room.svg",
+      "extra": {"stack": "B", "position": "south"}
+    },
+    {
+      "id": "apt-502",
+      "number": "502",
+      "floor": 5,
+      "status": "available",
+      "rooms": 2,
+      "areaM2": 68.4,
+      "price": {"amountMinor": 12310000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-2-room.svg",
+      "extra": {"stack": "B", "position": "south"}
+    },
+    {
+      "id": "apt-602",
+      "number": "602",
+      "floor": 6,
+      "status": "available",
+      "rooms": 2,
+      "areaM2": 68.4,
+      "price": {"amountMinor": 12520000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-2-room.svg",
+      "extra": {"stack": "B", "position": "south"}
+    },
+    {
+      "id": "apt-702",
+      "number": "702",
+      "floor": 7,
+      "status": "available",
+      "rooms": 2,
+      "areaM2": 68.4,
+      "price": {"amountMinor": 12720000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-2-room.svg",
+      "extra": {"stack": "B", "position": "south"}
+    },
+    {
+      "id": "apt-802",
+      "number": "802",
+      "floor": 8,
+      "status": "available",
+      "rooms": 2,
+      "areaM2": 68.4,
+      "price": {"amountMinor": 12930000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-2-room.svg",
+      "extra": {"stack": "B", "position": "south"}
+    },
+    {
+      "id": "apt-902",
+      "number": "902",
+      "floor": 9,
+      "status": "reserved",
+      "rooms": 2,
+      "areaM2": 68.4,
+      "price": {"amountMinor": 13130000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-2-room.svg",
+      "extra": {"stack": "B", "position": "south"}
+    },
+    {
+      "id": "apt-1002",
+      "number": "1002",
+      "floor": 10,
+      "status": "available",
+      "rooms": 2,
+      "areaM2": 68.4,
+      "price": {"amountMinor": 13340000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-2-room.svg",
+      "extra": {"stack": "B", "position": "south"}
+    },
+    {
+      "id": "apt-1102",
+      "number": "1102",
+      "floor": 11,
+      "status": "sold",
+      "rooms": 2,
+      "areaM2": 68.4,
+      "price": {"amountMinor": 13540000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-2-room.svg",
+      "extra": {"stack": "B", "position": "south"}
+    },
+    {
+      "id": "apt-1202",
+      "number": "1202",
+      "floor": 12,
+      "status": "available",
+      "rooms": 2,
+      "areaM2": 68.4,
+      "price": {"amountMinor": 13750000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-2-room.svg",
+      "extra": {"stack": "B", "position": "south"}
+    },
+    {
+      "id": "apt-1302",
+      "number": "1302",
+      "floor": 13,
+      "status": "sold",
+      "rooms": 2,
+      "areaM2": 68.4,
+      "price": {"amountMinor": 13950000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-2-room.svg",
+      "extra": {"stack": "B", "position": "south"}
+    },
+    {
+      "id": "apt-103",
+      "number": "103",
+      "floor": 1,
+      "status": "available",
+      "rooms": 3,
+      "areaM2": 97.8,
+      "price": {"amountMinor": 17600000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-3-room.svg",
+      "extra": {"stack": "C", "position": "south-east corner"}
+    },
+    {
+      "id": "apt-203",
+      "number": "203",
+      "floor": 2,
+      "status": "reserved",
+      "rooms": 3,
+      "areaM2": 97.8,
+      "price": {"amountMinor": 17900000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-3-room.svg",
+      "extra": {"stack": "C", "position": "south-east corner"}
+    },
+    {
+      "id": "apt-303",
+      "number": "303",
+      "floor": 3,
+      "status": "available",
+      "rooms": 3,
+      "areaM2": 97.8,
+      "price": {"amountMinor": 18190000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-3-room.svg",
+      "extra": {"stack": "C", "position": "south-east corner"}
+    },
+    {
+      "id": "apt-403",
+      "number": "403",
+      "floor": 4,
+      "status": "sold",
+      "rooms": 3,
+      "areaM2": 97.8,
+      "price": {"amountMinor": 18480000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-3-room.svg",
+      "extra": {"stack": "C", "position": "south-east corner"}
+    },
+    {
+      "id": "apt-503",
+      "number": "503",
+      "floor": 5,
+      "status": "available",
+      "rooms": 3,
+      "areaM2": 97.8,
+      "price": {"amountMinor": 18780000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-3-room.svg",
+      "extra": {"stack": "C", "position": "south-east corner"}
+    },
+    {
+      "id": "apt-603",
+      "number": "603",
+      "floor": 6,
+      "status": "sold",
+      "rooms": 3,
+      "areaM2": 97.8,
+      "price": {"amountMinor": 19070000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-3-room.svg",
+      "extra": {"stack": "C", "position": "south-east corner"}
+    },
+    {
+      "id": "apt-703",
+      "number": "703",
+      "floor": 7,
+      "status": "available",
+      "rooms": 3,
+      "areaM2": 97.8,
+      "price": {"amountMinor": 19360000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-3-room.svg",
+      "extra": {"stack": "C", "position": "south-east corner"}
+    },
+    {
+      "id": "apt-803",
+      "number": "803",
+      "floor": 8,
+      "status": "sold",
+      "rooms": 3,
+      "areaM2": 97.8,
+      "price": {"amountMinor": 19660000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-3-room.svg",
+      "extra": {"stack": "C", "position": "south-east corner"}
+    },
+    {
+      "id": "apt-903",
+      "number": "903",
+      "floor": 9,
+      "status": "available",
+      "rooms": 3,
+      "areaM2": 97.8,
+      "price": {"amountMinor": 19950000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-3-room.svg",
+      "extra": {"stack": "C", "position": "south-east corner"}
+    },
+    {
+      "id": "apt-1003",
+      "number": "1003",
+      "floor": 10,
+      "status": "available",
+      "rooms": 3,
+      "areaM2": 97.8,
+      "price": {"amountMinor": 20240000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-3-room.svg",
+      "extra": {"stack": "C", "position": "south-east corner"}
+    },
+    {
+      "id": "apt-1103",
+      "number": "1103",
+      "floor": 11,
+      "status": "reserved",
+      "rooms": 3,
+      "areaM2": 97.8,
+      "price": {"amountMinor": 20540000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-3-room.svg",
+      "extra": {"stack": "C", "position": "south-east corner"}
+    },
+    {
+      "id": "apt-1203",
+      "number": "1203",
+      "floor": 12,
+      "status": "available",
+      "rooms": 3,
+      "areaM2": 97.8,
+      "price": {"amountMinor": 20830000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-3-room.svg",
+      "extra": {"stack": "C", "position": "south-east corner"}
+    },
+    {
+      "id": "apt-1303",
+      "number": "1303",
+      "floor": 13,
+      "status": "reserved",
+      "rooms": 3,
+      "areaM2": 97.8,
+      "price": {"amountMinor": 21120000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-3-room.svg",
+      "extra": {"stack": "C", "position": "south-east corner"}
+    },
+    {
+      "id": "apt-104",
+      "number": "104",
+      "floor": 1,
+      "status": "sold",
+      "rooms": 2,
+      "areaM2": 63.7,
+      "price": {"amountMinor": 10700000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-2-room.svg",
+      "extra": {"stack": "D", "position": "east"}
+    },
+    {
+      "id": "apt-204",
+      "number": "204",
+      "floor": 2,
+      "status": "available",
+      "rooms": 2,
+      "areaM2": 63.7,
+      "price": {"amountMinor": 10890000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-2-room.svg",
+      "extra": {"stack": "D", "position": "east"}
+    },
+    {
+      "id": "apt-304",
+      "number": "304",
+      "floor": 3,
+      "status": "available",
+      "rooms": 2,
+      "areaM2": 63.7,
+      "price": {"amountMinor": 11080000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-2-room.svg",
+      "extra": {"stack": "D", "position": "east"}
+    },
+    {
+      "id": "apt-404",
+      "number": "404",
+      "floor": 4,
+      "status": "reserved",
+      "rooms": 2,
+      "areaM2": 63.7,
+      "price": {"amountMinor": 11270000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-2-room.svg",
+      "extra": {"stack": "D", "position": "east"}
+    },
+    {
+      "id": "apt-504",
+      "number": "504",
+      "floor": 5,
+      "status": "available",
+      "rooms": 2,
+      "areaM2": 63.7,
+      "price": {"amountMinor": 11470000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-2-room.svg",
+      "extra": {"stack": "D", "position": "east"}
+    },
+    {
+      "id": "apt-604",
+      "number": "604",
+      "floor": 6,
+      "status": "reserved",
+      "rooms": 2,
+      "areaM2": 63.7,
+      "price": {"amountMinor": 11660000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-2-room.svg",
+      "extra": {"stack": "D", "position": "east"}
+    },
+    {
+      "id": "apt-704",
+      "number": "704",
+      "floor": 7,
+      "status": "available",
+      "rooms": 2,
+      "areaM2": 63.7,
+      "price": {"amountMinor": 11850000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-2-room.svg",
+      "extra": {"stack": "D", "position": "east"}
+    },
+    {
+      "id": "apt-804",
+      "number": "804",
+      "floor": 8,
+      "status": "sold",
+      "rooms": 2,
+      "areaM2": 63.7,
+      "price": {"amountMinor": 12040000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-2-room.svg",
+      "extra": {"stack": "D", "position": "east"}
+    },
+    {
+      "id": "apt-904",
+      "number": "904",
+      "floor": 9,
+      "status": "available",
+      "rooms": 2,
+      "areaM2": 63.7,
+      "price": {"amountMinor": 12230000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-2-room.svg",
+      "extra": {"stack": "D", "position": "east"}
+    },
+    {
+      "id": "apt-1004",
+      "number": "1004",
+      "floor": 10,
+      "status": "sold",
+      "rooms": 2,
+      "areaM2": 63.7,
+      "price": {"amountMinor": 12420000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-2-room.svg",
+      "extra": {"stack": "D", "position": "east"}
+    },
+    {
+      "id": "apt-1104",
+      "number": "1104",
+      "floor": 11,
+      "status": "available",
+      "rooms": 2,
+      "areaM2": 63.7,
+      "price": {"amountMinor": 12610000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-2-room.svg",
+      "extra": {"stack": "D", "position": "east"}
+    },
+    {
+      "id": "apt-1204",
+      "number": "1204",
+      "floor": 12,
+      "status": "available",
+      "rooms": 2,
+      "areaM2": 63.7,
+      "price": {"amountMinor": 12800000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-2-room.svg",
+      "extra": {"stack": "D", "position": "east"}
+    },
+    {
+      "id": "apt-1304",
+      "number": "1304",
+      "floor": 13,
+      "status": "available",
+      "rooms": 2,
+      "areaM2": 63.7,
+      "price": {"amountMinor": 12990000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-2-room.svg",
+      "extra": {"stack": "D", "position": "east"}
+    },
+    {
+      "id": "apt-105",
+      "number": "105",
+      "floor": 1,
+      "status": "sold",
+      "rooms": 3,
+      "areaM2": 101.2,
+      "price": {"amountMinor": 18220000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-3-room.svg",
+      "extra": {"stack": "E", "position": "north-east corner"}
+    },
+    {
+      "id": "apt-205",
+      "number": "205",
+      "floor": 2,
+      "status": "available",
+      "rooms": 3,
+      "areaM2": 101.2,
+      "price": {"amountMinor": 18520000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-3-room.svg",
+      "extra": {"stack": "E", "position": "north-east corner"}
+    },
+    {
+      "id": "apt-305",
+      "number": "305",
+      "floor": 3,
+      "status": "sold",
+      "rooms": 3,
+      "areaM2": 101.2,
+      "price": {"amountMinor": 18820000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-3-room.svg",
+      "extra": {"stack": "E", "position": "north-east corner"}
+    },
+    {
+      "id": "apt-405",
+      "number": "405",
+      "floor": 4,
+      "status": "available",
+      "rooms": 3,
+      "areaM2": 101.2,
+      "price": {"amountMinor": 19130000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-3-room.svg",
+      "extra": {"stack": "E", "position": "north-east corner"}
+    },
+    {
+      "id": "apt-505",
+      "number": "505",
+      "floor": 5,
+      "status": "available",
+      "rooms": 3,
+      "areaM2": 101.2,
+      "price": {"amountMinor": 19430000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-3-room.svg",
+      "extra": {"stack": "E", "position": "north-east corner"}
+    },
+    {
+      "id": "apt-605",
+      "number": "605",
+      "floor": 6,
+      "status": "available",
+      "rooms": 3,
+      "areaM2": 101.2,
+      "price": {"amountMinor": 19730000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-3-room.svg",
+      "extra": {"stack": "E", "position": "north-east corner"}
+    },
+    {
+      "id": "apt-705",
+      "number": "705",
+      "floor": 7,
+      "status": "available",
+      "rooms": 3,
+      "areaM2": 101.2,
+      "price": {"amountMinor": 20040000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-3-room.svg",
+      "extra": {"stack": "E", "position": "north-east corner"}
+    },
+    {
+      "id": "apt-805",
+      "number": "805",
+      "floor": 8,
+      "status": "reserved",
+      "rooms": 3,
+      "areaM2": 101.2,
+      "price": {"amountMinor": 20340000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-3-room.svg",
+      "extra": {"stack": "E", "position": "north-east corner"}
+    },
+    {
+      "id": "apt-905",
+      "number": "905",
+      "floor": 9,
+      "status": "available",
+      "rooms": 3,
+      "areaM2": 101.2,
+      "price": {"amountMinor": 20640000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-3-room.svg",
+      "extra": {"stack": "E", "position": "north-east corner"}
+    },
+    {
+      "id": "apt-1005",
+      "number": "1005",
+      "floor": 10,
+      "status": "sold",
+      "rooms": 3,
+      "areaM2": 101.2,
+      "price": {"amountMinor": 20950000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-3-room.svg",
+      "extra": {"stack": "E", "position": "north-east corner"}
+    },
+    {
+      "id": "apt-1105",
+      "number": "1105",
+      "floor": 11,
+      "status": "available",
+      "rooms": 3,
+      "areaM2": 101.2,
+      "price": {"amountMinor": 21250000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-3-room.svg",
+      "extra": {"stack": "E", "position": "north-east corner"}
+    },
+    {
+      "id": "apt-1205",
+      "number": "1205",
+      "floor": 12,
+      "status": "sold",
+      "rooms": 3,
+      "areaM2": 101.2,
+      "price": {"amountMinor": 21560000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-3-room.svg",
+      "extra": {"stack": "E", "position": "north-east corner"}
+    },
+    {
+      "id": "apt-1305",
+      "number": "1305",
+      "floor": 13,
+      "status": "available",
+      "rooms": 3,
+      "areaM2": 101.2,
+      "price": {"amountMinor": 21860000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-3-room.svg",
+      "extra": {"stack": "E", "position": "north-east corner"}
+    },
+    {
+      "id": "apt-106",
+      "number": "106",
+      "floor": 1,
+      "status": "reserved",
+      "rooms": 2,
+      "areaM2": 73.9,
+      "price": {"amountMinor": 12420000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-2-room.svg",
+      "extra": {"stack": "F", "position": "north"}
+    },
+    {
+      "id": "apt-206",
+      "number": "206",
+      "floor": 2,
+      "status": "available",
+      "rooms": 2,
+      "areaM2": 73.9,
+      "price": {"amountMinor": 12640000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-2-room.svg",
+      "extra": {"stack": "F", "position": "north"}
+    },
+    {
+      "id": "apt-306",
+      "number": "306",
+      "floor": 3,
+      "status": "sold",
+      "rooms": 2,
+      "areaM2": 73.9,
+      "price": {"amountMinor": 12860000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-2-room.svg",
+      "extra": {"stack": "F", "position": "north"}
+    },
+    {
+      "id": "apt-406",
+      "number": "406",
+      "floor": 4,
+      "status": "available",
+      "rooms": 2,
+      "areaM2": 73.9,
+      "price": {"amountMinor": 13080000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-2-room.svg",
+      "extra": {"stack": "F", "position": "north"}
+    },
+    {
+      "id": "apt-506",
+      "number": "506",
+      "floor": 5,
+      "status": "sold",
+      "rooms": 2,
+      "areaM2": 73.9,
+      "price": {"amountMinor": 13300000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-2-room.svg",
+      "extra": {"stack": "F", "position": "north"}
+    },
+    {
+      "id": "apt-606",
+      "number": "606",
+      "floor": 6,
+      "status": "available",
+      "rooms": 2,
+      "areaM2": 73.9,
+      "price": {"amountMinor": 13520000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-2-room.svg",
+      "extra": {"stack": "F", "position": "north"}
+    },
+    {
+      "id": "apt-706",
+      "number": "706",
+      "floor": 7,
+      "status": "sold",
+      "rooms": 2,
+      "areaM2": 73.9,
+      "price": {"amountMinor": 13750000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-2-room.svg",
+      "extra": {"stack": "F", "position": "north"}
+    },
+    {
+      "id": "apt-806",
+      "number": "806",
+      "floor": 8,
+      "status": "available",
+      "rooms": 2,
+      "areaM2": 73.9,
+      "price": {"amountMinor": 13970000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-2-room.svg",
+      "extra": {"stack": "F", "position": "north"}
+    },
+    {
+      "id": "apt-906",
+      "number": "906",
+      "floor": 9,
+      "status": "available",
+      "rooms": 2,
+      "areaM2": 73.9,
+      "price": {"amountMinor": 14190000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-2-room.svg",
+      "extra": {"stack": "F", "position": "north"}
+    },
+    {
+      "id": "apt-1006",
+      "number": "1006",
+      "floor": 10,
+      "status": "reserved",
+      "rooms": 2,
+      "areaM2": 73.9,
+      "price": {"amountMinor": 14410000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-2-room.svg",
+      "extra": {"stack": "F", "position": "north"}
+    },
+    {
+      "id": "apt-1106",
+      "number": "1106",
+      "floor": 11,
+      "status": "available",
+      "rooms": 2,
+      "areaM2": 73.9,
+      "price": {"amountMinor": 14630000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-2-room.svg",
+      "extra": {"stack": "F", "position": "north"}
+    },
+    {
+      "id": "apt-1206",
+      "number": "1206",
+      "floor": 12,
+      "status": "reserved",
+      "rooms": 2,
+      "areaM2": 73.9,
+      "price": {"amountMinor": 14850000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-2-room.svg",
+      "extra": {"stack": "F", "position": "north"}
+    },
+    {
+      "id": "apt-1306",
+      "number": "1306",
+      "floor": 13,
+      "status": "available",
+      "rooms": 2,
+      "areaM2": 73.9,
+      "price": {"amountMinor": 15080000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-2-room.svg",
+      "extra": {"stack": "F", "position": "north"}
+    },
+    {
+      "id": "apt-107",
+      "number": "107",
+      "floor": 1,
+      "status": "available",
+      "rooms": 3,
+      "areaM2": 95.6,
+      "price": {"amountMinor": 17210000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-3-room.svg",
+      "extra": {"stack": "G", "position": "north-west corner"}
+    },
+    {
+      "id": "apt-207",
+      "number": "207",
+      "floor": 2,
+      "status": "available",
+      "rooms": 3,
+      "areaM2": 95.6,
+      "price": {"amountMinor": 17490000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-3-room.svg",
+      "extra": {"stack": "G", "position": "north-west corner"}
+    },
+    {
+      "id": "apt-307",
+      "number": "307",
+      "floor": 3,
+      "status": "reserved",
+      "rooms": 3,
+      "areaM2": 95.6,
+      "price": {"amountMinor": 17780000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-3-room.svg",
+      "extra": {"stack": "G", "position": "north-west corner"}
+    },
+    {
+      "id": "apt-407",
+      "number": "407",
+      "floor": 4,
+      "status": "available",
+      "rooms": 3,
+      "areaM2": 95.6,
+      "price": {"amountMinor": 18070000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-3-room.svg",
+      "extra": {"stack": "G", "position": "north-west corner"}
+    },
+    {
+      "id": "apt-507",
+      "number": "507",
+      "floor": 5,
+      "status": "reserved",
+      "rooms": 3,
+      "areaM2": 95.6,
+      "price": {"amountMinor": 18360000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-3-room.svg",
+      "extra": {"stack": "G", "position": "north-west corner"}
+    },
+    {
+      "id": "apt-607",
+      "number": "607",
+      "floor": 6,
+      "status": "available",
+      "rooms": 3,
+      "areaM2": 95.6,
+      "price": {"amountMinor": 18640000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-3-room.svg",
+      "extra": {"stack": "G", "position": "north-west corner"}
+    },
+    {
+      "id": "apt-707",
+      "number": "707",
+      "floor": 7,
+      "status": "sold",
+      "rooms": 3,
+      "areaM2": 95.6,
+      "price": {"amountMinor": 18930000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-3-room.svg",
+      "extra": {"stack": "G", "position": "north-west corner"}
+    },
+    {
+      "id": "apt-807",
+      "number": "807",
+      "floor": 8,
+      "status": "available",
+      "rooms": 3,
+      "areaM2": 95.6,
+      "price": {"amountMinor": 19220000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-3-room.svg",
+      "extra": {"stack": "G", "position": "north-west corner"}
+    },
+    {
+      "id": "apt-907",
+      "number": "907",
+      "floor": 9,
+      "status": "sold",
+      "rooms": 3,
+      "areaM2": 95.6,
+      "price": {"amountMinor": 19500000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-3-room.svg",
+      "extra": {"stack": "G", "position": "north-west corner"}
+    },
+    {
+      "id": "apt-1007",
+      "number": "1007",
+      "floor": 10,
+      "status": "available",
+      "rooms": 3,
+      "areaM2": 95.6,
+      "price": {"amountMinor": 19790000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-3-room.svg",
+      "extra": {"stack": "G", "position": "north-west corner"}
+    },
+    {
+      "id": "apt-1107",
+      "number": "1107",
+      "floor": 11,
+      "status": "available",
+      "rooms": 3,
+      "areaM2": 95.6,
+      "price": {"amountMinor": 20080000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-3-room.svg",
+      "extra": {"stack": "G", "position": "north-west corner"}
+    },
+    {
+      "id": "apt-1207",
+      "number": "1207",
+      "floor": 12,
+      "status": "available",
+      "rooms": 3,
+      "areaM2": 95.6,
+      "price": {"amountMinor": 20360000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-3-room.svg",
+      "extra": {"stack": "G", "position": "north-west corner"}
+    },
+    {
+      "id": "apt-1307",
+      "number": "1307",
+      "floor": 13,
+      "status": "available",
+      "rooms": 3,
+      "areaM2": 95.6,
+      "price": {"amountMinor": 20650000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-3-room.svg",
+      "extra": {"stack": "G", "position": "north-west corner"}
+    },
+    {
+      "id": "apt-108",
+      "number": "108",
+      "floor": 1,
+      "status": "available",
+      "rooms": 2,
+      "areaM2": 66.2,
+      "price": {"amountMinor": 11120000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-2-room.svg",
+      "extra": {"stack": "H", "position": "west"}
+    },
+    {
+      "id": "apt-208",
+      "number": "208",
+      "floor": 2,
+      "status": "sold",
+      "rooms": 2,
+      "areaM2": 66.2,
+      "price": {"amountMinor": 11320000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-2-room.svg",
+      "extra": {"stack": "H", "position": "west"}
+    },
+    {
+      "id": "apt-308",
+      "number": "308",
+      "floor": 3,
+      "status": "available",
+      "rooms": 2,
+      "areaM2": 66.2,
+      "price": {"amountMinor": 11520000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-2-room.svg",
+      "extra": {"stack": "H", "position": "west"}
+    },
+    {
+      "id": "apt-408",
+      "number": "408",
+      "floor": 4,
+      "status": "available",
+      "rooms": 2,
+      "areaM2": 66.2,
+      "price": {"amountMinor": 11720000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-2-room.svg",
+      "extra": {"stack": "H", "position": "west"}
+    },
+    {
+      "id": "apt-508",
+      "number": "508",
+      "floor": 5,
+      "status": "available",
+      "rooms": 2,
+      "areaM2": 66.2,
+      "price": {"amountMinor": 11920000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-2-room.svg",
+      "extra": {"stack": "H", "position": "west"}
+    },
+    {
+      "id": "apt-608",
+      "number": "608",
+      "floor": 6,
+      "status": "available",
+      "rooms": 2,
+      "areaM2": 66.2,
+      "price": {"amountMinor": 12110000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-2-room.svg",
+      "extra": {"stack": "H", "position": "west"}
+    },
+    {
+      "id": "apt-708",
+      "number": "708",
+      "floor": 7,
+      "status": "reserved",
+      "rooms": 2,
+      "areaM2": 66.2,
+      "price": {"amountMinor": 12310000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-2-room.svg",
+      "extra": {"stack": "H", "position": "west"}
+    },
+    {
+      "id": "apt-808",
+      "number": "808",
+      "floor": 8,
+      "status": "available",
+      "rooms": 2,
+      "areaM2": 66.2,
+      "price": {"amountMinor": 12510000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-2-room.svg",
+      "extra": {"stack": "H", "position": "west"}
+    },
+    {
+      "id": "apt-908",
+      "number": "908",
+      "floor": 9,
+      "status": "sold",
+      "rooms": 2,
+      "areaM2": 66.2,
+      "price": {"amountMinor": 12710000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-2-room.svg",
+      "extra": {"stack": "H", "position": "west"}
+    },
+    {
+      "id": "apt-1008",
+      "number": "1008",
+      "floor": 10,
+      "status": "available",
+      "rooms": 2,
+      "areaM2": 66.2,
+      "price": {"amountMinor": 12910000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-2-room.svg",
+      "extra": {"stack": "H", "position": "west"}
+    },
+    {
+      "id": "apt-1108",
+      "number": "1108",
+      "floor": 11,
+      "status": "sold",
+      "rooms": 2,
+      "areaM2": 66.2,
+      "price": {"amountMinor": 13110000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-2-room.svg",
+      "extra": {"stack": "H", "position": "west"}
+    },
+    {
+      "id": "apt-1208",
+      "number": "1208",
+      "floor": 12,
+      "status": "available",
+      "rooms": 2,
+      "areaM2": 66.2,
+      "price": {"amountMinor": 13310000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-2-room.svg",
+      "extra": {"stack": "H", "position": "west"}
+    },
+    {
+      "id": "apt-1308",
+      "number": "1308",
+      "floor": 13,
+      "status": "sold",
+      "rooms": 2,
+      "areaM2": 66.2,
+      "price": {"amountMinor": 13500000, "currency": "AZN"},
+      "planImage": "assets/plans/plan-2-room.svg",
+      "extra": {"stack": "H", "position": "west"}
+    }
+  ],
+  "regions": [
+    {
+      "apartmentId": "apt-101",
+      "facade": "front",
+      "polygon": [[0, 0.8238], [0.35, 0.8238], [0.35, 0.8902], [0, 0.8902]]
+    },
+    {
+      "apartmentId": "apt-101",
+      "facade": "left",
+      "polygon": [[0.63, 0.8238], [1, 0.8238], [1, 0.8902], [0.63, 0.8902]]
+    },
+    {
+      "apartmentId": "apt-201",
+      "facade": "front",
+      "polygon": [[0, 0.7578], [0.35, 0.7578], [0.35, 0.8238], [0, 0.8238]]
+    },
+    {
+      "apartmentId": "apt-201",
+      "facade": "left",
+      "polygon": [[0.63, 0.7578], [1, 0.7578], [1, 0.8238], [0.63, 0.8238]]
+    },
+    {
+      "apartmentId": "apt-301",
+      "facade": "front",
+      "polygon": [[0, 0.6918], [0.35, 0.6918], [0.35, 0.7578], [0, 0.7578]]
+    },
+    {
+      "apartmentId": "apt-301",
+      "facade": "left",
+      "polygon": [[0.63, 0.6918], [1, 0.6918], [1, 0.7578], [0.63, 0.7578]]
+    },
+    {
+      "apartmentId": "apt-401",
+      "facade": "front",
+      "polygon": [[0, 0.6258], [0.35, 0.6258], [0.35, 0.6918], [0, 0.6918]]
+    },
+    {
+      "apartmentId": "apt-401",
+      "facade": "left",
+      "polygon": [[0.63, 0.6258], [1, 0.6258], [1, 0.6918], [0.63, 0.6918]]
+    },
+    {
+      "apartmentId": "apt-501",
+      "facade": "front",
+      "polygon": [[0, 0.5601], [0.35, 0.5601], [0.35, 0.6258], [0, 0.6258]]
+    },
+    {
+      "apartmentId": "apt-501",
+      "facade": "left",
+      "polygon": [[0.63, 0.5601], [1, 0.5601], [1, 0.6258], [0.63, 0.6258]]
+    },
+    {
+      "apartmentId": "apt-601",
+      "facade": "front",
+      "polygon": [[0, 0.4941], [0.35, 0.4941], [0.35, 0.5601], [0, 0.5601]]
+    },
+    {
+      "apartmentId": "apt-601",
+      "facade": "left",
+      "polygon": [[0.63, 0.4941], [1, 0.4941], [1, 0.5601], [0.63, 0.5601]]
+    },
+    {
+      "apartmentId": "apt-701",
+      "facade": "front",
+      "polygon": [[0, 0.428], [0.35, 0.428], [0.35, 0.4941], [0, 0.4941]]
+    },
+    {
+      "apartmentId": "apt-701",
+      "facade": "left",
+      "polygon": [[0.63, 0.428], [1, 0.428], [1, 0.4941], [0.63, 0.4941]]
+    },
+    {
+      "apartmentId": "apt-801",
+      "facade": "front",
+      "polygon": [[0, 0.362], [0.35, 0.362], [0.35, 0.428], [0, 0.428]]
+    },
+    {
+      "apartmentId": "apt-801",
+      "facade": "left",
+      "polygon": [[0.63, 0.362], [1, 0.362], [1, 0.428], [0.63, 0.428]]
+    },
+    {
+      "apartmentId": "apt-901",
+      "facade": "front",
+      "polygon": [[0, 0.296], [0.35, 0.296], [0.35, 0.362], [0, 0.362]]
+    },
+    {
+      "apartmentId": "apt-901",
+      "facade": "left",
+      "polygon": [[0.63, 0.296], [1, 0.296], [1, 0.362], [0.63, 0.362]]
+    },
+    {
+      "apartmentId": "apt-1001",
+      "facade": "front",
+      "polygon": [[0, 0.23], [0.35, 0.23], [0.35, 0.296], [0, 0.296]]
+    },
+    {
+      "apartmentId": "apt-1001",
+      "facade": "left",
+      "polygon": [[0.63, 0.23], [1, 0.23], [1, 0.296], [0.63, 0.296]]
+    },
+    {
+      "apartmentId": "apt-1101",
+      "facade": "front",
+      "polygon": [[0, 0.164], [0.35, 0.164], [0.35, 0.23], [0, 0.23]]
+    },
+    {
+      "apartmentId": "apt-1101",
+      "facade": "left",
+      "polygon": [[0.63, 0.164], [1, 0.164], [1, 0.23], [0.63, 0.23]]
+    },
+    {
+      "apartmentId": "apt-1201",
+      "facade": "front",
+      "polygon": [[0, 0.1001], [0.35, 0.1001], [0.35, 0.164], [0, 0.164]]
+    },
+    {
+      "apartmentId": "apt-1201",
+      "facade": "left",
+      "polygon": [[0.63, 0.1001], [1, 0.1001], [1, 0.164], [0.63, 0.164]]
+    },
+    {
+      "apartmentId": "apt-1301",
+      "facade": "front",
+      "polygon": [[0, 0], [0.35, 0], [0.35, 0.1001], [0, 0.1001]]
+    },
+    {
+      "apartmentId": "apt-1301",
+      "facade": "left",
+      "polygon": [[0.63, 0], [1, 0], [1, 0.1001], [0.63, 0.1001]]
+    },
+    {
+      "apartmentId": "apt-102",
+      "facade": "front",
+      "polygon": [[0.35, 0.8238], [0.545, 0.8238], [0.545, 0.8902], [0.35, 0.8902]]
+    },
+    {
+      "apartmentId": "apt-202",
+      "facade": "front",
+      "polygon": [[0.35, 0.7578], [0.545, 0.7578], [0.545, 0.8238], [0.35, 0.8238]]
+    },
+    {
+      "apartmentId": "apt-302",
+      "facade": "front",
+      "polygon": [[0.35, 0.6918], [0.545, 0.6918], [0.545, 0.7578], [0.35, 0.7578]]
+    },
+    {
+      "apartmentId": "apt-402",
+      "facade": "front",
+      "polygon": [[0.35, 0.6258], [0.545, 0.6258], [0.545, 0.6918], [0.35, 0.6918]]
+    },
+    {
+      "apartmentId": "apt-502",
+      "facade": "front",
+      "polygon": [[0.35, 0.5601], [0.545, 0.5601], [0.545, 0.6258], [0.35, 0.6258]]
+    },
+    {
+      "apartmentId": "apt-602",
+      "facade": "front",
+      "polygon": [[0.35, 0.4941], [0.545, 0.4941], [0.545, 0.5601], [0.35, 0.5601]]
+    },
+    {
+      "apartmentId": "apt-702",
+      "facade": "front",
+      "polygon": [[0.35, 0.428], [0.545, 0.428], [0.545, 0.4941], [0.35, 0.4941]]
+    },
+    {
+      "apartmentId": "apt-802",
+      "facade": "front",
+      "polygon": [[0.35, 0.362], [0.545, 0.362], [0.545, 0.428], [0.35, 0.428]]
+    },
+    {
+      "apartmentId": "apt-902",
+      "facade": "front",
+      "polygon": [[0.35, 0.296], [0.545, 0.296], [0.545, 0.362], [0.35, 0.362]]
+    },
+    {
+      "apartmentId": "apt-1002",
+      "facade": "front",
+      "polygon": [[0.35, 0.23], [0.545, 0.23], [0.545, 0.296], [0.35, 0.296]]
+    },
+    {
+      "apartmentId": "apt-1102",
+      "facade": "front",
+      "polygon": [[0.35, 0.164], [0.545, 0.164], [0.545, 0.23], [0.35, 0.23]]
+    },
+    {
+      "apartmentId": "apt-1202",
+      "facade": "front",
+      "polygon": [[0.35, 0.1001], [0.545, 0.1001], [0.545, 0.164], [0.35, 0.164]]
+    },
+    {
+      "apartmentId": "apt-1302",
+      "facade": "front",
+      "polygon": [[0.35, 0], [0.545, 0], [0.545, 0.1001], [0.35, 0.1001]]
+    },
+    {
+      "apartmentId": "apt-103",
+      "facade": "front",
+      "polygon": [[0.645, 0.8238], [1, 0.8238], [1, 0.8902], [0.645, 0.8902]]
+    },
+    {
+      "apartmentId": "apt-103",
+      "facade": "right",
+      "polygon": [[0, 0.8238], [0.25, 0.8238], [0.25, 0.8902], [0, 0.8902]]
+    },
+    {
+      "apartmentId": "apt-203",
+      "facade": "front",
+      "polygon": [[0.645, 0.7578], [1, 0.7578], [1, 0.8238], [0.645, 0.8238]]
+    },
+    {
+      "apartmentId": "apt-203",
+      "facade": "right",
+      "polygon": [[0, 0.7578], [0.25, 0.7578], [0.25, 0.8238], [0, 0.8238]]
+    },
+    {
+      "apartmentId": "apt-303",
+      "facade": "front",
+      "polygon": [[0.645, 0.6918], [1, 0.6918], [1, 0.7578], [0.645, 0.7578]]
+    },
+    {
+      "apartmentId": "apt-303",
+      "facade": "right",
+      "polygon": [[0, 0.6918], [0.25, 0.6918], [0.25, 0.7578], [0, 0.7578]]
+    },
+    {
+      "apartmentId": "apt-403",
+      "facade": "front",
+      "polygon": [[0.645, 0.6258], [1, 0.6258], [1, 0.6918], [0.645, 0.6918]]
+    },
+    {
+      "apartmentId": "apt-403",
+      "facade": "right",
+      "polygon": [[0, 0.6258], [0.25, 0.6258], [0.25, 0.6918], [0, 0.6918]]
+    },
+    {
+      "apartmentId": "apt-503",
+      "facade": "front",
+      "polygon": [[0.645, 0.5601], [1, 0.5601], [1, 0.6258], [0.645, 0.6258]]
+    },
+    {
+      "apartmentId": "apt-503",
+      "facade": "right",
+      "polygon": [[0, 0.5601], [0.25, 0.5601], [0.25, 0.6258], [0, 0.6258]]
+    },
+    {
+      "apartmentId": "apt-603",
+      "facade": "front",
+      "polygon": [[0.645, 0.4941], [1, 0.4941], [1, 0.5601], [0.645, 0.5601]]
+    },
+    {
+      "apartmentId": "apt-603",
+      "facade": "right",
+      "polygon": [[0, 0.4941], [0.25, 0.4941], [0.25, 0.5601], [0, 0.5601]]
+    },
+    {
+      "apartmentId": "apt-703",
+      "facade": "front",
+      "polygon": [[0.645, 0.428], [1, 0.428], [1, 0.4941], [0.645, 0.4941]]
+    },
+    {
+      "apartmentId": "apt-703",
+      "facade": "right",
+      "polygon": [[0, 0.428], [0.25, 0.428], [0.25, 0.4941], [0, 0.4941]]
+    },
+    {
+      "apartmentId": "apt-803",
+      "facade": "front",
+      "polygon": [[0.645, 0.362], [1, 0.362], [1, 0.428], [0.645, 0.428]]
+    },
+    {
+      "apartmentId": "apt-803",
+      "facade": "right",
+      "polygon": [[0, 0.362], [0.25, 0.362], [0.25, 0.428], [0, 0.428]]
+    },
+    {
+      "apartmentId": "apt-903",
+      "facade": "front",
+      "polygon": [[0.645, 0.296], [1, 0.296], [1, 0.362], [0.645, 0.362]]
+    },
+    {
+      "apartmentId": "apt-903",
+      "facade": "right",
+      "polygon": [[0, 0.296], [0.25, 0.296], [0.25, 0.362], [0, 0.362]]
+    },
+    {
+      "apartmentId": "apt-1003",
+      "facade": "front",
+      "polygon": [[0.645, 0.23], [1, 0.23], [1, 0.296], [0.645, 0.296]]
+    },
+    {
+      "apartmentId": "apt-1003",
+      "facade": "right",
+      "polygon": [[0, 0.23], [0.25, 0.23], [0.25, 0.296], [0, 0.296]]
+    },
+    {
+      "apartmentId": "apt-1103",
+      "facade": "front",
+      "polygon": [[0.645, 0.164], [1, 0.164], [1, 0.23], [0.645, 0.23]]
+    },
+    {
+      "apartmentId": "apt-1103",
+      "facade": "right",
+      "polygon": [[0, 0.164], [0.25, 0.164], [0.25, 0.23], [0, 0.23]]
+    },
+    {
+      "apartmentId": "apt-1203",
+      "facade": "front",
+      "polygon": [[0.645, 0.1001], [1, 0.1001], [1, 0.164], [0.645, 0.164]]
+    },
+    {
+      "apartmentId": "apt-1203",
+      "facade": "right",
+      "polygon": [[0, 0.1001], [0.25, 0.1001], [0.25, 0.164], [0, 0.164]]
+    },
+    {
+      "apartmentId": "apt-1303",
+      "facade": "front",
+      "polygon": [[0.645, 0], [1, 0], [1, 0.1001], [0.645, 0.1001]]
+    },
+    {
+      "apartmentId": "apt-1303",
+      "facade": "right",
+      "polygon": [[0, 0], [0.25, 0], [0.25, 0.1001], [0, 0.1001]]
+    },
+    {
+      "apartmentId": "apt-104",
+      "facade": "right",
+      "polygon": [[0.25, 0.8238], [0.59, 0.8238], [0.59, 0.8902], [0.25, 0.8902]]
+    },
+    {
+      "apartmentId": "apt-204",
+      "facade": "right",
+      "polygon": [[0.25, 0.7578], [0.59, 0.7578], [0.59, 0.8238], [0.25, 0.8238]]
+    },
+    {
+      "apartmentId": "apt-304",
+      "facade": "right",
+      "polygon": [[0.25, 0.6918], [0.59, 0.6918], [0.59, 0.7578], [0.25, 0.7578]]
+    },
+    {
+      "apartmentId": "apt-404",
+      "facade": "right",
+      "polygon": [[0.25, 0.6258], [0.59, 0.6258], [0.59, 0.6918], [0.25, 0.6918]]
+    },
+    {
+      "apartmentId": "apt-504",
+      "facade": "right",
+      "polygon": [[0.25, 0.5601], [0.59, 0.5601], [0.59, 0.6258], [0.25, 0.6258]]
+    },
+    {
+      "apartmentId": "apt-604",
+      "facade": "right",
+      "polygon": [[0.25, 0.4941], [0.59, 0.4941], [0.59, 0.5601], [0.25, 0.5601]]
+    },
+    {
+      "apartmentId": "apt-704",
+      "facade": "right",
+      "polygon": [[0.25, 0.428], [0.59, 0.428], [0.59, 0.4941], [0.25, 0.4941]]
+    },
+    {
+      "apartmentId": "apt-804",
+      "facade": "right",
+      "polygon": [[0.25, 0.362], [0.59, 0.362], [0.59, 0.428], [0.25, 0.428]]
+    },
+    {
+      "apartmentId": "apt-904",
+      "facade": "right",
+      "polygon": [[0.25, 0.296], [0.59, 0.296], [0.59, 0.362], [0.25, 0.362]]
+    },
+    {
+      "apartmentId": "apt-1004",
+      "facade": "right",
+      "polygon": [[0.25, 0.23], [0.59, 0.23], [0.59, 0.296], [0.25, 0.296]]
+    },
+    {
+      "apartmentId": "apt-1104",
+      "facade": "right",
+      "polygon": [[0.25, 0.164], [0.59, 0.164], [0.59, 0.23], [0.25, 0.23]]
+    },
+    {
+      "apartmentId": "apt-1204",
+      "facade": "right",
+      "polygon": [[0.25, 0.1001], [0.59, 0.1001], [0.59, 0.164], [0.25, 0.164]]
+    },
+    {
+      "apartmentId": "apt-1304",
+      "facade": "right",
+      "polygon": [[0.25, 0], [0.59, 0], [0.59, 0.1001], [0.25, 0.1001]]
+    },
+    {
+      "apartmentId": "apt-105",
+      "facade": "right",
+      "polygon": [[0.7, 0.8238], [1, 0.8238], [1, 0.8902], [0.7, 0.8902]]
+    },
+    {
+      "apartmentId": "apt-105",
+      "facade": "back",
+      "polygon": [[0, 0.8238], [0.36, 0.8238], [0.36, 0.8902], [0, 0.8902]]
+    },
+    {
+      "apartmentId": "apt-205",
+      "facade": "right",
+      "polygon": [[0.7, 0.7578], [1, 0.7578], [1, 0.8238], [0.7, 0.8238]]
+    },
+    {
+      "apartmentId": "apt-205",
+      "facade": "back",
+      "polygon": [[0, 0.7578], [0.36, 0.7578], [0.36, 0.8238], [0, 0.8238]]
+    },
+    {
+      "apartmentId": "apt-305",
+      "facade": "right",
+      "polygon": [[0.7, 0.6918], [1, 0.6918], [1, 0.7578], [0.7, 0.7578]]
+    },
+    {
+      "apartmentId": "apt-305",
+      "facade": "back",
+      "polygon": [[0, 0.6918], [0.36, 0.6918], [0.36, 0.7578], [0, 0.7578]]
+    },
+    {
+      "apartmentId": "apt-405",
+      "facade": "right",
+      "polygon": [[0.7, 0.6258], [1, 0.6258], [1, 0.6918], [0.7, 0.6918]]
+    },
+    {
+      "apartmentId": "apt-405",
+      "facade": "back",
+      "polygon": [[0, 0.6258], [0.36, 0.6258], [0.36, 0.6918], [0, 0.6918]]
+    },
+    {
+      "apartmentId": "apt-505",
+      "facade": "right",
+      "polygon": [[0.7, 0.5601], [1, 0.5601], [1, 0.6258], [0.7, 0.6258]]
+    },
+    {
+      "apartmentId": "apt-505",
+      "facade": "back",
+      "polygon": [[0, 0.5601], [0.36, 0.5601], [0.36, 0.6258], [0, 0.6258]]
+    },
+    {
+      "apartmentId": "apt-605",
+      "facade": "right",
+      "polygon": [[0.7, 0.4941], [1, 0.4941], [1, 0.5601], [0.7, 0.5601]]
+    },
+    {
+      "apartmentId": "apt-605",
+      "facade": "back",
+      "polygon": [[0, 0.4941], [0.36, 0.4941], [0.36, 0.5601], [0, 0.5601]]
+    },
+    {
+      "apartmentId": "apt-705",
+      "facade": "right",
+      "polygon": [[0.7, 0.428], [1, 0.428], [1, 0.4941], [0.7, 0.4941]]
+    },
+    {
+      "apartmentId": "apt-705",
+      "facade": "back",
+      "polygon": [[0, 0.428], [0.36, 0.428], [0.36, 0.4941], [0, 0.4941]]
+    },
+    {
+      "apartmentId": "apt-805",
+      "facade": "right",
+      "polygon": [[0.7, 0.362], [1, 0.362], [1, 0.428], [0.7, 0.428]]
+    },
+    {
+      "apartmentId": "apt-805",
+      "facade": "back",
+      "polygon": [[0, 0.362], [0.36, 0.362], [0.36, 0.428], [0, 0.428]]
+    },
+    {
+      "apartmentId": "apt-905",
+      "facade": "right",
+      "polygon": [[0.7, 0.296], [1, 0.296], [1, 0.362], [0.7, 0.362]]
+    },
+    {
+      "apartmentId": "apt-905",
+      "facade": "back",
+      "polygon": [[0, 0.296], [0.36, 0.296], [0.36, 0.362], [0, 0.362]]
+    },
+    {
+      "apartmentId": "apt-1005",
+      "facade": "right",
+      "polygon": [[0.7, 0.23], [1, 0.23], [1, 0.296], [0.7, 0.296]]
+    },
+    {
+      "apartmentId": "apt-1005",
+      "facade": "back",
+      "polygon": [[0, 0.23], [0.36, 0.23], [0.36, 0.296], [0, 0.296]]
+    },
+    {
+      "apartmentId": "apt-1105",
+      "facade": "right",
+      "polygon": [[0.7, 0.164], [1, 0.164], [1, 0.23], [0.7, 0.23]]
+    },
+    {
+      "apartmentId": "apt-1105",
+      "facade": "back",
+      "polygon": [[0, 0.164], [0.36, 0.164], [0.36, 0.23], [0, 0.23]]
+    },
+    {
+      "apartmentId": "apt-1205",
+      "facade": "right",
+      "polygon": [[0.7, 0.1001], [1, 0.1001], [1, 0.164], [0.7, 0.164]]
+    },
+    {
+      "apartmentId": "apt-1205",
+      "facade": "back",
+      "polygon": [[0, 0.1001], [0.36, 0.1001], [0.36, 0.164], [0, 0.164]]
+    },
+    {
+      "apartmentId": "apt-1305",
+      "facade": "right",
+      "polygon": [[0.7, 0], [1, 0], [1, 0.1001], [0.7, 0.1001]]
+    },
+    {
+      "apartmentId": "apt-1305",
+      "facade": "back",
+      "polygon": [[0, 0], [0.36, 0], [0.36, 0.1001], [0, 0.1001]]
+    },
+    {
+      "apartmentId": "apt-106",
+      "facade": "back",
+      "polygon": [[0.36, 0.8238], [0.645, 0.8238], [0.645, 0.8902], [0.36, 0.8902]]
+    },
+    {
+      "apartmentId": "apt-206",
+      "facade": "back",
+      "polygon": [[0.36, 0.7578], [0.645, 0.7578], [0.645, 0.8238], [0.36, 0.8238]]
+    },
+    {
+      "apartmentId": "apt-306",
+      "facade": "back",
+      "polygon": [[0.36, 0.6918], [0.645, 0.6918], [0.645, 0.7578], [0.36, 0.7578]]
+    },
+    {
+      "apartmentId": "apt-406",
+      "facade": "back",
+      "polygon": [[0.36, 0.6258], [0.645, 0.6258], [0.645, 0.6918], [0.36, 0.6918]]
+    },
+    {
+      "apartmentId": "apt-506",
+      "facade": "back",
+      "polygon": [[0.36, 0.5601], [0.645, 0.5601], [0.645, 0.6258], [0.36, 0.6258]]
+    },
+    {
+      "apartmentId": "apt-606",
+      "facade": "back",
+      "polygon": [[0.36, 0.4941], [0.645, 0.4941], [0.645, 0.5601], [0.36, 0.5601]]
+    },
+    {
+      "apartmentId": "apt-706",
+      "facade": "back",
+      "polygon": [[0.36, 0.428], [0.645, 0.428], [0.645, 0.4941], [0.36, 0.4941]]
+    },
+    {
+      "apartmentId": "apt-806",
+      "facade": "back",
+      "polygon": [[0.36, 0.362], [0.645, 0.362], [0.645, 0.428], [0.36, 0.428]]
+    },
+    {
+      "apartmentId": "apt-906",
+      "facade": "back",
+      "polygon": [[0.36, 0.296], [0.645, 0.296], [0.645, 0.362], [0.36, 0.362]]
+    },
+    {
+      "apartmentId": "apt-1006",
+      "facade": "back",
+      "polygon": [[0.36, 0.23], [0.645, 0.23], [0.645, 0.296], [0.36, 0.296]]
+    },
+    {
+      "apartmentId": "apt-1106",
+      "facade": "back",
+      "polygon": [[0.36, 0.164], [0.645, 0.164], [0.645, 0.23], [0.36, 0.23]]
+    },
+    {
+      "apartmentId": "apt-1206",
+      "facade": "back",
+      "polygon": [[0.36, 0.1001], [0.645, 0.1001], [0.645, 0.164], [0.36, 0.164]]
+    },
+    {
+      "apartmentId": "apt-1306",
+      "facade": "back",
+      "polygon": [[0.36, 0], [0.645, 0], [0.645, 0.1001], [0.36, 0.1001]]
+    },
+    {
+      "apartmentId": "apt-107",
+      "facade": "back",
+      "polygon": [[0.645, 0.8238], [1, 0.8238], [1, 0.8902], [0.645, 0.8902]]
+    },
+    {
+      "apartmentId": "apt-107",
+      "facade": "left",
+      "polygon": [[0, 0.8238], [0.29, 0.8238], [0.29, 0.8902], [0, 0.8902]]
+    },
+    {
+      "apartmentId": "apt-207",
+      "facade": "back",
+      "polygon": [[0.645, 0.7578], [1, 0.7578], [1, 0.8238], [0.645, 0.8238]]
+    },
+    {
+      "apartmentId": "apt-207",
+      "facade": "left",
+      "polygon": [[0, 0.7578], [0.29, 0.7578], [0.29, 0.8238], [0, 0.8238]]
+    },
+    {
+      "apartmentId": "apt-307",
+      "facade": "back",
+      "polygon": [[0.645, 0.6918], [1, 0.6918], [1, 0.7578], [0.645, 0.7578]]
+    },
+    {
+      "apartmentId": "apt-307",
+      "facade": "left",
+      "polygon": [[0, 0.6918], [0.29, 0.6918], [0.29, 0.7578], [0, 0.7578]]
+    },
+    {
+      "apartmentId": "apt-407",
+      "facade": "back",
+      "polygon": [[0.645, 0.6258], [1, 0.6258], [1, 0.6918], [0.645, 0.6918]]
+    },
+    {
+      "apartmentId": "apt-407",
+      "facade": "left",
+      "polygon": [[0, 0.6258], [0.29, 0.6258], [0.29, 0.6918], [0, 0.6918]]
+    },
+    {
+      "apartmentId": "apt-507",
+      "facade": "back",
+      "polygon": [[0.645, 0.5601], [1, 0.5601], [1, 0.6258], [0.645, 0.6258]]
+    },
+    {
+      "apartmentId": "apt-507",
+      "facade": "left",
+      "polygon": [[0, 0.5601], [0.29, 0.5601], [0.29, 0.6258], [0, 0.6258]]
+    },
+    {
+      "apartmentId": "apt-607",
+      "facade": "back",
+      "polygon": [[0.645, 0.4941], [1, 0.4941], [1, 0.5601], [0.645, 0.5601]]
+    },
+    {
+      "apartmentId": "apt-607",
+      "facade": "left",
+      "polygon": [[0, 0.4941], [0.29, 0.4941], [0.29, 0.5601], [0, 0.5601]]
+    },
+    {
+      "apartmentId": "apt-707",
+      "facade": "back",
+      "polygon": [[0.645, 0.428], [1, 0.428], [1, 0.4941], [0.645, 0.4941]]
+    },
+    {
+      "apartmentId": "apt-707",
+      "facade": "left",
+      "polygon": [[0, 0.428], [0.29, 0.428], [0.29, 0.4941], [0, 0.4941]]
+    },
+    {
+      "apartmentId": "apt-807",
+      "facade": "back",
+      "polygon": [[0.645, 0.362], [1, 0.362], [1, 0.428], [0.645, 0.428]]
+    },
+    {
+      "apartmentId": "apt-807",
+      "facade": "left",
+      "polygon": [[0, 0.362], [0.29, 0.362], [0.29, 0.428], [0, 0.428]]
+    },
+    {
+      "apartmentId": "apt-907",
+      "facade": "back",
+      "polygon": [[0.645, 0.296], [1, 0.296], [1, 0.362], [0.645, 0.362]]
+    },
+    {
+      "apartmentId": "apt-907",
+      "facade": "left",
+      "polygon": [[0, 0.296], [0.29, 0.296], [0.29, 0.362], [0, 0.362]]
+    },
+    {
+      "apartmentId": "apt-1007",
+      "facade": "back",
+      "polygon": [[0.645, 0.23], [1, 0.23], [1, 0.296], [0.645, 0.296]]
+    },
+    {
+      "apartmentId": "apt-1007",
+      "facade": "left",
+      "polygon": [[0, 0.23], [0.29, 0.23], [0.29, 0.296], [0, 0.296]]
+    },
+    {
+      "apartmentId": "apt-1107",
+      "facade": "back",
+      "polygon": [[0.645, 0.164], [1, 0.164], [1, 0.23], [0.645, 0.23]]
+    },
+    {
+      "apartmentId": "apt-1107",
+      "facade": "left",
+      "polygon": [[0, 0.164], [0.29, 0.164], [0.29, 0.23], [0, 0.23]]
+    },
+    {
+      "apartmentId": "apt-1207",
+      "facade": "back",
+      "polygon": [[0.645, 0.1001], [1, 0.1001], [1, 0.164], [0.645, 0.164]]
+    },
+    {
+      "apartmentId": "apt-1207",
+      "facade": "left",
+      "polygon": [[0, 0.1001], [0.29, 0.1001], [0.29, 0.164], [0, 0.164]]
+    },
+    {
+      "apartmentId": "apt-1307",
+      "facade": "back",
+      "polygon": [[0.645, 0], [1, 0], [1, 0.1001], [0.645, 0.1001]]
+    },
+    {
+      "apartmentId": "apt-1307",
+      "facade": "left",
+      "polygon": [[0, 0], [0.29, 0], [0.29, 0.1001], [0, 0.1001]]
+    },
+    {
+      "apartmentId": "apt-108",
+      "facade": "left",
+      "polygon": [[0.41, 0.8238], [0.63, 0.8238], [0.63, 0.8902], [0.41, 0.8902]]
+    },
+    {
+      "apartmentId": "apt-208",
+      "facade": "left",
+      "polygon": [[0.41, 0.7578], [0.63, 0.7578], [0.63, 0.8238], [0.41, 0.8238]]
+    },
+    {
+      "apartmentId": "apt-308",
+      "facade": "left",
+      "polygon": [[0.41, 0.6918], [0.63, 0.6918], [0.63, 0.7578], [0.41, 0.7578]]
+    },
+    {
+      "apartmentId": "apt-408",
+      "facade": "left",
+      "polygon": [[0.41, 0.6258], [0.63, 0.6258], [0.63, 0.6918], [0.41, 0.6918]]
+    },
+    {
+      "apartmentId": "apt-508",
+      "facade": "left",
+      "polygon": [[0.41, 0.5601], [0.63, 0.5601], [0.63, 0.6258], [0.41, 0.6258]]
+    },
+    {
+      "apartmentId": "apt-608",
+      "facade": "left",
+      "polygon": [[0.41, 0.4941], [0.63, 0.4941], [0.63, 0.5601], [0.41, 0.5601]]
+    },
+    {
+      "apartmentId": "apt-708",
+      "facade": "left",
+      "polygon": [[0.41, 0.428], [0.63, 0.428], [0.63, 0.4941], [0.41, 0.4941]]
+    },
+    {
+      "apartmentId": "apt-808",
+      "facade": "left",
+      "polygon": [[0.41, 0.362], [0.63, 0.362], [0.63, 0.428], [0.41, 0.428]]
+    },
+    {
+      "apartmentId": "apt-908",
+      "facade": "left",
+      "polygon": [[0.41, 0.296], [0.63, 0.296], [0.63, 0.362], [0.41, 0.362]]
+    },
+    {
+      "apartmentId": "apt-1008",
+      "facade": "left",
+      "polygon": [[0.41, 0.23], [0.63, 0.23], [0.63, 0.296], [0.41, 0.296]]
+    },
+    {
+      "apartmentId": "apt-1108",
+      "facade": "left",
+      "polygon": [[0.41, 0.164], [0.63, 0.164], [0.63, 0.23], [0.41, 0.23]]
+    },
+    {
+      "apartmentId": "apt-1208",
+      "facade": "left",
+      "polygon": [[0.41, 0.1001], [0.63, 0.1001], [0.63, 0.164], [0.41, 0.164]]
+    },
+    {
+      "apartmentId": "apt-1308",
+      "facade": "left",
+      "polygon": [[0.41, 0], [0.63, 0], [0.63, 0.1001], [0.41, 0.1001]]
+    }
+  ],
+  "editor": {
+    "floorLines": [
+      0,
+      0.1001,
+      0.164,
+      0.23,
+      0.296,
+      0.362,
+      0.428,
+      0.4941,
+      0.5601,
+      0.6258,
+      0.6918,
+      0.7578,
+      0.8238,
+      0.8902,
+      1
+    ],
+    "baseLevel": 0,
+    "dividers": {
+      "front": [0.35, 0.545, 0.645],
+      "right": [0.25, 0.59, 0.7],
+      "back": [0.36, 0.645],
+      "left": [0.29, 0.41, 0.63]
+    },
+    "units": {
+      "apt-101": {"level": 1, "cells": [{"facade": "front", "col": 0}, {"facade": "left", "col": 3}]},
+      "apt-201": {"level": 2, "cells": [{"facade": "front", "col": 0}, {"facade": "left", "col": 3}]},
+      "apt-301": {"level": 3, "cells": [{"facade": "front", "col": 0}, {"facade": "left", "col": 3}]},
+      "apt-401": {"level": 4, "cells": [{"facade": "front", "col": 0}, {"facade": "left", "col": 3}]},
+      "apt-501": {"level": 5, "cells": [{"facade": "front", "col": 0}, {"facade": "left", "col": 3}]},
+      "apt-601": {"level": 6, "cells": [{"facade": "front", "col": 0}, {"facade": "left", "col": 3}]},
+      "apt-701": {"level": 7, "cells": [{"facade": "front", "col": 0}, {"facade": "left", "col": 3}]},
+      "apt-801": {"level": 8, "cells": [{"facade": "front", "col": 0}, {"facade": "left", "col": 3}]},
+      "apt-901": {"level": 9, "cells": [{"facade": "front", "col": 0}, {"facade": "left", "col": 3}]},
+      "apt-1001": {"level": 10, "cells": [{"facade": "front", "col": 0}, {"facade": "left", "col": 3}]},
+      "apt-1101": {"level": 11, "cells": [{"facade": "front", "col": 0}, {"facade": "left", "col": 3}]},
+      "apt-1201": {"level": 12, "cells": [{"facade": "front", "col": 0}, {"facade": "left", "col": 3}]},
+      "apt-1301": {"level": 13, "cells": [{"facade": "front", "col": 0}, {"facade": "left", "col": 3}]},
+      "apt-102": {"level": 1, "cells": [{"facade": "front", "col": 1}]},
+      "apt-202": {"level": 2, "cells": [{"facade": "front", "col": 1}]},
+      "apt-302": {"level": 3, "cells": [{"facade": "front", "col": 1}]},
+      "apt-402": {"level": 4, "cells": [{"facade": "front", "col": 1}]},
+      "apt-502": {"level": 5, "cells": [{"facade": "front", "col": 1}]},
+      "apt-602": {"level": 6, "cells": [{"facade": "front", "col": 1}]},
+      "apt-702": {"level": 7, "cells": [{"facade": "front", "col": 1}]},
+      "apt-802": {"level": 8, "cells": [{"facade": "front", "col": 1}]},
+      "apt-902": {"level": 9, "cells": [{"facade": "front", "col": 1}]},
+      "apt-1002": {"level": 10, "cells": [{"facade": "front", "col": 1}]},
+      "apt-1102": {"level": 11, "cells": [{"facade": "front", "col": 1}]},
+      "apt-1202": {"level": 12, "cells": [{"facade": "front", "col": 1}]},
+      "apt-1302": {"level": 13, "cells": [{"facade": "front", "col": 1}]},
+      "apt-103": {"level": 1, "cells": [{"facade": "front", "col": 3}, {"facade": "right", "col": 0}]},
+      "apt-203": {"level": 2, "cells": [{"facade": "front", "col": 3}, {"facade": "right", "col": 0}]},
+      "apt-303": {"level": 3, "cells": [{"facade": "front", "col": 3}, {"facade": "right", "col": 0}]},
+      "apt-403": {"level": 4, "cells": [{"facade": "front", "col": 3}, {"facade": "right", "col": 0}]},
+      "apt-503": {"level": 5, "cells": [{"facade": "front", "col": 3}, {"facade": "right", "col": 0}]},
+      "apt-603": {"level": 6, "cells": [{"facade": "front", "col": 3}, {"facade": "right", "col": 0}]},
+      "apt-703": {"level": 7, "cells": [{"facade": "front", "col": 3}, {"facade": "right", "col": 0}]},
+      "apt-803": {"level": 8, "cells": [{"facade": "front", "col": 3}, {"facade": "right", "col": 0}]},
+      "apt-903": {"level": 9, "cells": [{"facade": "front", "col": 3}, {"facade": "right", "col": 0}]},
+      "apt-1003": {"level": 10, "cells": [{"facade": "front", "col": 3}, {"facade": "right", "col": 0}]},
+      "apt-1103": {"level": 11, "cells": [{"facade": "front", "col": 3}, {"facade": "right", "col": 0}]},
+      "apt-1203": {"level": 12, "cells": [{"facade": "front", "col": 3}, {"facade": "right", "col": 0}]},
+      "apt-1303": {"level": 13, "cells": [{"facade": "front", "col": 3}, {"facade": "right", "col": 0}]},
+      "apt-104": {"level": 1, "cells": [{"facade": "right", "col": 1}]},
+      "apt-204": {"level": 2, "cells": [{"facade": "right", "col": 1}]},
+      "apt-304": {"level": 3, "cells": [{"facade": "right", "col": 1}]},
+      "apt-404": {"level": 4, "cells": [{"facade": "right", "col": 1}]},
+      "apt-504": {"level": 5, "cells": [{"facade": "right", "col": 1}]},
+      "apt-604": {"level": 6, "cells": [{"facade": "right", "col": 1}]},
+      "apt-704": {"level": 7, "cells": [{"facade": "right", "col": 1}]},
+      "apt-804": {"level": 8, "cells": [{"facade": "right", "col": 1}]},
+      "apt-904": {"level": 9, "cells": [{"facade": "right", "col": 1}]},
+      "apt-1004": {"level": 10, "cells": [{"facade": "right", "col": 1}]},
+      "apt-1104": {"level": 11, "cells": [{"facade": "right", "col": 1}]},
+      "apt-1204": {"level": 12, "cells": [{"facade": "right", "col": 1}]},
+      "apt-1304": {"level": 13, "cells": [{"facade": "right", "col": 1}]},
+      "apt-105": {"level": 1, "cells": [{"facade": "right", "col": 3}, {"facade": "back", "col": 0}]},
+      "apt-205": {"level": 2, "cells": [{"facade": "right", "col": 3}, {"facade": "back", "col": 0}]},
+      "apt-305": {"level": 3, "cells": [{"facade": "right", "col": 3}, {"facade": "back", "col": 0}]},
+      "apt-405": {"level": 4, "cells": [{"facade": "right", "col": 3}, {"facade": "back", "col": 0}]},
+      "apt-505": {"level": 5, "cells": [{"facade": "right", "col": 3}, {"facade": "back", "col": 0}]},
+      "apt-605": {"level": 6, "cells": [{"facade": "right", "col": 3}, {"facade": "back", "col": 0}]},
+      "apt-705": {"level": 7, "cells": [{"facade": "right", "col": 3}, {"facade": "back", "col": 0}]},
+      "apt-805": {"level": 8, "cells": [{"facade": "right", "col": 3}, {"facade": "back", "col": 0}]},
+      "apt-905": {"level": 9, "cells": [{"facade": "right", "col": 3}, {"facade": "back", "col": 0}]},
+      "apt-1005": {"level": 10, "cells": [{"facade": "right", "col": 3}, {"facade": "back", "col": 0}]},
+      "apt-1105": {"level": 11, "cells": [{"facade": "right", "col": 3}, {"facade": "back", "col": 0}]},
+      "apt-1205": {"level": 12, "cells": [{"facade": "right", "col": 3}, {"facade": "back", "col": 0}]},
+      "apt-1305": {"level": 13, "cells": [{"facade": "right", "col": 3}, {"facade": "back", "col": 0}]},
+      "apt-106": {"level": 1, "cells": [{"facade": "back", "col": 1}]},
+      "apt-206": {"level": 2, "cells": [{"facade": "back", "col": 1}]},
+      "apt-306": {"level": 3, "cells": [{"facade": "back", "col": 1}]},
+      "apt-406": {"level": 4, "cells": [{"facade": "back", "col": 1}]},
+      "apt-506": {"level": 5, "cells": [{"facade": "back", "col": 1}]},
+      "apt-606": {"level": 6, "cells": [{"facade": "back", "col": 1}]},
+      "apt-706": {"level": 7, "cells": [{"facade": "back", "col": 1}]},
+      "apt-806": {"level": 8, "cells": [{"facade": "back", "col": 1}]},
+      "apt-906": {"level": 9, "cells": [{"facade": "back", "col": 1}]},
+      "apt-1006": {"level": 10, "cells": [{"facade": "back", "col": 1}]},
+      "apt-1106": {"level": 11, "cells": [{"facade": "back", "col": 1}]},
+      "apt-1206": {"level": 12, "cells": [{"facade": "back", "col": 1}]},
+      "apt-1306": {"level": 13, "cells": [{"facade": "back", "col": 1}]},
+      "apt-107": {"level": 1, "cells": [{"facade": "back", "col": 2}, {"facade": "left", "col": 0}]},
+      "apt-207": {"level": 2, "cells": [{"facade": "back", "col": 2}, {"facade": "left", "col": 0}]},
+      "apt-307": {"level": 3, "cells": [{"facade": "back", "col": 2}, {"facade": "left", "col": 0}]},
+      "apt-407": {"level": 4, "cells": [{"facade": "back", "col": 2}, {"facade": "left", "col": 0}]},
+      "apt-507": {"level": 5, "cells": [{"facade": "back", "col": 2}, {"facade": "left", "col": 0}]},
+      "apt-607": {"level": 6, "cells": [{"facade": "back", "col": 2}, {"facade": "left", "col": 0}]},
+      "apt-707": {"level": 7, "cells": [{"facade": "back", "col": 2}, {"facade": "left", "col": 0}]},
+      "apt-807": {"level": 8, "cells": [{"facade": "back", "col": 2}, {"facade": "left", "col": 0}]},
+      "apt-907": {"level": 9, "cells": [{"facade": "back", "col": 2}, {"facade": "left", "col": 0}]},
+      "apt-1007": {"level": 10, "cells": [{"facade": "back", "col": 2}, {"facade": "left", "col": 0}]},
+      "apt-1107": {"level": 11, "cells": [{"facade": "back", "col": 2}, {"facade": "left", "col": 0}]},
+      "apt-1207": {"level": 12, "cells": [{"facade": "back", "col": 2}, {"facade": "left", "col": 0}]},
+      "apt-1307": {"level": 13, "cells": [{"facade": "back", "col": 2}, {"facade": "left", "col": 0}]},
+      "apt-108": {"level": 1, "cells": [{"facade": "left", "col": 2}]},
+      "apt-208": {"level": 2, "cells": [{"facade": "left", "col": 2}]},
+      "apt-308": {"level": 3, "cells": [{"facade": "left", "col": 2}]},
+      "apt-408": {"level": 4, "cells": [{"facade": "left", "col": 2}]},
+      "apt-508": {"level": 5, "cells": [{"facade": "left", "col": 2}]},
+      "apt-608": {"level": 6, "cells": [{"facade": "left", "col": 2}]},
+      "apt-708": {"level": 7, "cells": [{"facade": "left", "col": 2}]},
+      "apt-808": {"level": 8, "cells": [{"facade": "left", "col": 2}]},
+      "apt-908": {"level": 9, "cells": [{"facade": "left", "col": 2}]},
+      "apt-1008": {"level": 10, "cells": [{"facade": "left", "col": 2}]},
+      "apt-1108": {"level": 11, "cells": [{"facade": "left", "col": 2}]},
+      "apt-1208": {"level": 12, "cells": [{"facade": "left", "col": 2}]},
+      "apt-1308": {"level": 13, "cells": [{"facade": "left", "col": 2}]}
+    },
+    "numberPattern": "{floor}{nn}"
+  }
+}

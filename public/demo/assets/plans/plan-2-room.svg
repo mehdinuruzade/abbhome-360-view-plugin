@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title>Sample two-room plan</title>
+  <rect width="400" height="300" fill="#ffffff"/>
+  <g fill="#f5f2ed" stroke="#3a4552" stroke-width="4" stroke-linejoin="round">
+    <rect x="20" y="20" width="200" height="190"/>
+    <rect x="220" y="20" width="160" height="130"/>
+    <rect x="220" y="150" width="95" height="60"/>
+    <rect x="315" y="150" width="65" height="60"/>
+  </g>
+  <rect x="20" y="210" width="360" height="44" fill="#e7eef4" stroke="#3a4552" stroke-width="3"/>
+  <g fill="#ffffff">
+    <rect x="216" y="160" width="8" height="34"/>
+    <rect x="240" y="146" width="34" height="8"/>
+    <rect x="311" y="166" width="8" height="28"/>
+    <rect x="80" y="206" width="60" height="8"/>
+    <rect x="280" y="206" width="60" height="8"/>
+  </g>
+  <g fill="#1d2733" font-size="14" text-anchor="middle">
+    <text x="120" y="118">Living / kitchen</text>
+    <text x="300" y="90">Bedroom</text>
+    <text x="267" y="185">Hall</text>
+    <text x="347" y="185">Bath</text>
+    <text x="200" y="237">Loggia</text>
+  </g>
+  <text x="20" y="284" font-size="12" fill="#6b7682">Sample plan · not to scale</text>
+</svg>

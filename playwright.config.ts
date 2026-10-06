@@ -12,7 +12,8 @@ export default defineConfig({
   reporter: process.env.CI ? [['github'], ['list']] : 'list',
   use: {
     baseURL: 'http://127.0.0.1:4173',
-    reducedMotion: 'reduce',
+    // The widget honours prefers-reduced-motion, so camera fly-to is instant in tests.
+    contextOptions: { reducedMotion: 'reduce' },
     launchOptions: {
       args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'],
     },

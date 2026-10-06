@@ -1,0 +1,111 @@
+import { describe, expect, it } from 'vitest';
+import { ConfigError, parseConfig, resolveUrl } from './parse-config';
+
+const corners = { tl: [0.2, 0.1], tr: [0.8, 0.1], br: [0.8, 0.9], bl: [0.2, 0.9] };
+const facade = (image: string) => ({ image, corners });
+
+function minimal(over: Record<string, unknown> = {}) {
+  return {
+    schemaVersion: 1,
+    id: 'b1',
+    name: 'Test',
+    dimensions: { width: 30, depth: 20, height: 40 },
+    facades: {
+      front: facade('front.webp'),
+      right: facade('right.webp'),
+      back: facade('back.webp'),
+      left: facade('left.webp'),
+    },
+    apartments: [
+      { id: 'a1', number: '101', floor: 1, status: 'available', rooms: 2 },
+      { id: 'a2', number: '102', floor: 1, status: 'on-hold' },
+    ],
+    regions: [
+      {
+        apartmentId: 'a1',
+        facade: 'front',
+        polygon: [
+          [0, 0],
+          [0.5, 0],
+          [0.5, 0.1],
+        ],
+      },
+    ],
+    ...over,
+  };
+}
+
+describe('parseConfig', () => {
+  it('reads a valid config and resolves image URLs against the config URL', () => {
+    const { config, warnings } = parseConfig(minimal(), 'https://cdn.example.com/b/1/building.json');
+    expect(config.facades.front.image).toBe('https://cdn.example.com/b/1/front.webp');
+    expect(config.apartments).toHaveLength(2);
+    expect(config.regions).toHaveLength(1);
+    expect(warnings).toEqual(['status "on-hold" (1 apartment) is shown as unavailable']);
+  });
+
+  it('keeps unknown fields at every level', () => {
+    const raw = minimal({ marketing: { tagline: 'x' } });
+    (raw.apartments[0] as Record<string, unknown>).view = 'sea';
+    const { config } = parseConfig(raw);
+    expect(config.marketing).toEqual({ tagline: 'x' });
+    expect(config.apartments[0]?.view).toBe('sea');
+  });
+
+  it('keeps an unknown status as-is (the widget shows it as unavailable)', () => {
+    const { config } = parseConfig(minimal());
+    expect(config.apartments[1]?.status).toBe('on-hold');
+  });
+
+  it('skips broken apartments and regions with warnings instead of failing', () => {
+    const raw = minimal({
+      apartments: [{ number: 'no id' }, { id: 'a1', floor: 2, price: { amountMinor: 'x' } }],
+      regions: [
+        { apartmentId: 'ghost', facade: 'front', polygon: [[0, 0], [1, 0], [1, 1]] },
+        { apartmentId: 'a1', facade: 'roof', polygon: [[0, 0], [1, 0], [1, 1]] },
+        { apartmentId: 'a1', facade: 'front', polygon: [[0, 0], [1, 0]] },
+      ],
+    });
+    const { config, warnings } = parseConfig(raw);
+    expect(config.apartments.map((a) => a.id)).toEqual(['a1']);
+    expect(config.apartments[0]?.price).toBeUndefined();
+    expect(config.regions).toEqual([]);
+    expect(warnings.length).toBeGreaterThanOrEqual(5);
+  });
+
+  it('falls back to the whole image for bad corners and a plain wall for a missing facade', () => {
+    const raw = minimal();
+    raw.facades.back = { image: 'back.webp', corners: { ...corners, tl: [0.9, 0.1] } };
+    delete (raw.facades as Record<string, unknown>).left;
+    const { config, warnings } = parseConfig(raw);
+    expect(config.facades.back.corners).toEqual({ tl: [0, 0], tr: [1, 0], br: [1, 1], bl: [0, 1] });
+    expect(config.facades.left.image).toBe('');
+    expect(warnings.some((w) => w.startsWith('facades.back.corners'))).toBe(true);
+    expect(warnings.some((w) => w.startsWith('facades.left'))).toBe(true);
+  });
+
+  it('reads a newer schema version best-effort with a warning', () => {
+    const { config, warnings } = parseConfig(minimal({ schemaVersion: 2 }));
+    expect(config.schemaVersion).toBe(2);
+    expect(warnings[0]).toMatch(/newer/);
+  });
+
+  it('throws only when there is nothing to show', () => {
+    expect(() => parseConfig('nope')).toThrow(ConfigError);
+    expect(() => parseConfig(minimal({ dimensions: { width: 0, depth: 1, height: 1 } }))).toThrow(
+      ConfigError,
+    );
+  });
+
+  it('drops malformed editor data but keeps the regions', () => {
+    const { config, warnings } = parseConfig(minimal({ editor: { floorLines: 'x' } }));
+    expect(config.editor).toBeUndefined();
+    expect(config.regions).toHaveLength(1);
+    expect(warnings.some((w) => w.includes('editor data'))).toBe(true);
+  });
+
+  it('leaves data and blob URLs alone', () => {
+    expect(resolveUrl('data:image/png;base64,AAA', 'https://x.test/a/')).toBe('data:image/png;base64,AAA');
+    expect(resolveUrl('plans/a.svg', 'https://x.test/a/b.json')).toBe('https://x.test/a/plans/a.svg');
+  });
+});
