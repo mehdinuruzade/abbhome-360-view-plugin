@@ -73,6 +73,14 @@ describe('editor grid model', () => {
     expect(c.regions.map((r) => r.facade).sort()).toEqual(['front', 'right']);
   });
 
+  it('gives a re-created stack its old numbers back', () => {
+    let c = grid();
+    for (const col of [0, 1]) c = createUnits(c, { cells: [{ facade: 'front', col }], levels: [1] }).config;
+    c = removeApartments(c, ['apt-101']);
+    const { created } = createUnits(c, { cells: [{ facade: 'front', col: 0 }], levels: [1] });
+    expect(created).toEqual(['apt-101']);
+  });
+
   it('skips levels where a cell is already taken', () => {
     let { config: c } = createUnits(grid(), { cells: [{ facade: 'front', col: 1 }], levels: [1] });
     const res = createUnits(c, { cells: [{ facade: 'front', col: 1 }], levels: [1, 2] });

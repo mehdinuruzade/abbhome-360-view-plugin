@@ -266,9 +266,10 @@ export interface CreateUnitsInput {
 }
 
 /**
- * One apartment per level from the same cells (a "stack"). Numbers follow the pattern, the index
- * counting the apartments already on that level, so stacks created in order get 01, 02, …
- * Levels where any of the cells is taken are skipped and returned.
+ * One apartment per level from the same cells (a "stack"). Numbers follow the pattern with the
+ * lowest index not yet used on that level, so stacks created in order get 01, 02, … and a
+ * re-created stack takes back its old number. Levels where any of the cells is taken are
+ * skipped and returned.
  */
 export function createUnits(
   config: BuildingConfig,
@@ -299,7 +300,7 @@ export function createUnits(
       skippedLevels.push(level);
       continue;
     }
-    let index = Object.values(units).filter((u) => u.level === level).length + 1;
+    let index = 1;
     let number = formatUnitNumber(pattern, level, index);
     while (numbers.has(number)) number = formatUnitNumber(pattern, level, ++index);
     let id = `apt-${number}`;
