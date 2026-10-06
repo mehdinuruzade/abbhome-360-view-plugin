@@ -28,6 +28,7 @@ const en = {
   viewLabel: '3D view of {name}. Tap an apartment to see its details.',
   legend: 'Apartment status',
   roomsShort: '{rooms} rooms',
+  showAvailability: 'Show availability',
 } as const;
 
 export type MessageKey = keyof typeof en;

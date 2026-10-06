@@ -12,6 +12,7 @@ import {
   type FacadeId,
   type Money,
   type Region,
+  type Relief,
   type UnitCell,
   type Vec2,
 } from './types';
@@ -74,11 +75,27 @@ function parseFacade(raw: unknown, f: FacadeId, baseUrl: string | undefined, war
   }
   const image = typeof raw.image === 'string' ? resolveUrl(raw.image, baseUrl) : '';
   if (!image) warnings.push(`facades.${f}.image is missing; showing a plain wall`);
-  return {
+  const facade: FacadeConfig = {
     ...raw,
     image,
     corners: parseCorners(raw.corners, `facades.${f}.corners`, warnings),
-  } satisfies FacadeConfig;
+  };
+  const relief = parseRelief(raw.relief, baseUrl);
+  if (relief) facade.relief = relief;
+  else {
+    if (raw.relief !== undefined) warnings.push(`facades.${f}.relief needs an image; the wall is shown flat`);
+    delete facade.relief;
+  }
+  return facade;
+}
+
+export const DEFAULT_RELIEF_DEPTH_M = 0.8;
+const MAX_RELIEF_DEPTH_M = 5;
+
+function parseRelief(raw: unknown, baseUrl: string | undefined): Relief | null {
+  if (!isObject(raw) || typeof raw.image !== 'string' || !raw.image) return null;
+  const depthM = isFiniteNumber(raw.depthM) ? Math.min(MAX_RELIEF_DEPTH_M, Math.max(0, raw.depthM)) : DEFAULT_RELIEF_DEPTH_M;
+  return { ...raw, image: resolveUrl(raw.image, baseUrl), depthM };
 }
 
 function parseDimensions(raw: unknown): Dimensions {

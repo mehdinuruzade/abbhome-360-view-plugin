@@ -1,6 +1,8 @@
 # Building 360 plugin
 
-Four straight-on photos of a residential building become an orbitable 3D building. Apartments
+Four straight-on photos of a residential building become an orbitable 3D building, lit by a
+sun that casts real shadows, with optional depth estimated from the photos so balconies, slabs
+and recesses stand out. Apartments
 marked on the facades light up in 3D; buyers tap one, see its details, and **Select** it, which
 notifies the page that embeds the widget. That page (ABB Home) takes over from there: listing,
 lead form, mortgage calculator.
@@ -28,7 +30,8 @@ Build once (`npm run build`), host `dist/lib/abb-building-360.iife.js`, then:
 ```html
 <script src="https://cdn.example.com/abb-building-360.iife.js"></script>
 
-<abb-building-360 config-url="https://cdn.example.com/buildings/123/building.json" locale="az"></abb-building-360>
+<abb-building-360 config-url="https://cdn.example.com/buildings/123/building.json" locale="az"
+                  availability="shown"></abb-building-360>
 
 <script>
   document.querySelector('abb-building-360').addEventListener('apartment-select', (e) => {
@@ -81,6 +84,10 @@ All events bubble and cross the shadow DOM (`composed`). Calls from the host (`o
 
 ### Size and look
 
+`availability="hidden"` starts with the plain building (only hovered, tapped and filtered apartments
+are coloured); the default is `shown`. Buyers can flip it with the **Show availability** switch in
+the legend; that never sends events to the host.
+
 The element is a block with `aspect-ratio: 4 / 3` (`4 / 5` on viewports under 600 px). Override it
 with ordinary CSS, e.g. `abb-building-360 { aspect-ratio: auto; height: 640px; }`.
 
@@ -107,7 +114,8 @@ Theme with CSS custom properties on the element: `--abb360-accent`, `--abb360-ac
   "facades": {
     "front": {
       "image": "assets/front.webp",                                      // relative to building.json
-      "corners": { "tl": [0.2, 0.121], "tr": [0.801, 0.121], "br": [0.801, 0.92], "bl": [0.2, 0.92] }
+      "corners": { "tl": [0.2, 0.121], "tr": [0.801, 0.121], "br": [0.801, 0.92], "bl": [0.2, 0.92] },
+      "relief": { "image": "data:image/png;base64,…", "depthM": 0.8 }                  // optional depth, made by the editor
     },
     "right": { … }, "back": { … }, "left": { … }
   },
@@ -126,6 +134,9 @@ Theme with CSS custom properties on the element: `--abb360-accent`, `--abb360-ac
 - **Facade order:** front, right, back, left. Walking round the building, each wall is the one to the right of the last.
 - **`corners`:** where the wall's corners sit in its photo, as fractions of the image's width and height (y down). Keystoned photos are fine; the widget corrects the perspective.
 - **`regions`:** an apartment's outline on one wall in facade coordinates: u from the wall's left edge to its right, v from the roof line (0) to the ground (1), as seen from outside. A corner apartment has one region on each of its two walls.
+- **`relief`** (optional): a grayscale image in the wall's facade coordinates. 128 is the wall plane,
+  white sticks out by `depthM` metres and black goes in by it. The widget pushes the wall surface in
+  and out with it. Widgets without depth support ignore it and show the wall flat.
 - **`status`:** `available`, `reserved` or `sold`. Any other value is kept and shown as unavailable.
 - **`price.amountMinor`:** an integer in the currency's minor unit (qəpik for AZN). Never a float.
 
@@ -156,17 +167,24 @@ Open `editor/index.html` (or the deployed site's `editor/`). Your work autosaves
    best: anything in front of the building (a neighbour's roof, cars, trees) ends up painted on the wall.
 2. **Corners.** Drag the four handles onto the main wall's corners: the roof line and the ground. Use
    the same physical height on every wall so floors meet at the building's corners.
-3. **Size.** Enter the height; **Measure** derives width and depth from the photos and warns when
+3. **Depth.** **Estimate all four walls** runs a depth model (Depth Anything V2 Small) in the
+   browser on each straightened photo. The first time it downloads the 27 MB model from Hugging Face;
+   after that the browser has it cached. Lighter sticks out, darker goes in. Tune **Strength** (metres) and
+   **Smoothing** while watching the 3D preview, or **Remove** depth from a wall that looks wrong.
+   Depth from a single photo is approximate: glass reflecting the sky, for instance, can read as
+   deep. If you move a wall's corners afterwards, estimate its depth again.
+4. **Size.** Enter the height; **Measure** derives width and depth from the photos and warns when
    opposite walls disagree by more than 5 % (usually a misplaced corner).
-4. **Floors.** Set the number of floors, **Space evenly**, then drag each line onto its slab. The
+5. **Floors.** Set the number of floors, **Space evenly**, then drag each line onto its slab. The
    lines are shared by all four walls, so check each wall.
-5. **Columns.** Click a wall to split it where apartments meet; drag or remove dividers.
-6. **Apartments.** Click the columns of one stack (for a corner apartment, also the column on the
+6. **Columns.** Click a wall to split it where apartments meet; drag or remove dividers.
+7. **Apartments.** Click the columns of one stack (for a corner apartment, also the column on the
    next wall), choose the floors, **Create**. Numbers follow the pattern (`{floor}{nn}` → 1203).
    Click an apartment to delete it or its whole stack.
-7. **Details.** Rooms, area, price, status and plan image per apartment.
+8. **Details.** Rooms, area, price, status and plan image per apartment.
 
-**Export JSON** downloads `building.json`. Upload it with the photos (same names, same folder).
+**Export JSON** downloads `building.json` (depth maps are embedded in it). Upload it with the
+photos (same names, same folder).
 **Import JSON** reopens it; pick the photos again if they were local files.
 
 ## Development
@@ -180,6 +198,7 @@ Open `editor/index.html` (or the deployed site's `editor/`). Your work autosaves
 | `npm run e2e` | Browser tests (Playwright, Chromium, desktop and phone viewports); needs `npm run build` first |
 | `npm run size` | Fails if the IIFE bundle passes 200 kB gzipped |
 | `npm run demo:config` | Rewrites `public/demo/building.json` from `scripts/demo-config.ts` |
+| `npm run demo:depth` | Computes the demo building's depth with the real model (after `npm run build`; needs internet access to huggingface.co and `npx playwright install chromium` once). `DEPTH_MODEL_FILE=model.onnx` uses a local copy |
 
 ```
 src/core/     config schema, lenient parser, homography, wall frames, geometry, apartments
@@ -193,7 +212,8 @@ tests/e2e/    Playwright tests
 
 ## Limitations of this prototype
 
-- It shows the facades on a box: balconies, recesses and setbacks are part of the photo, not modelled.
+- The building is a box whose walls can be pushed in and out by estimated depth; it isn't a measured
+  3D model, and steep depth changes stretch the photo on their sides.
 - English strings only; prices and areas already format for the `locale` you pass.
 - The editor draws apartments as grid cells (floor × column). The config and widget already accept any polygon.
 - No backend, accounts, reservations or spreadsheet import yet.

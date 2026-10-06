@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import { deriveDimensions, quadAspect } from '../src/core/dimensions';
 import type { BuildingConfig, Corners, FacadeConfig, FacadeId, UnitCell } from '../src/core/types';
 import { createUnits, updateApartment, type WithEditor } from '../src/editor/state';
@@ -60,6 +61,8 @@ const STACKS: Stack[] = [
   { key: 'H', position: 'west', cells: [{ facade: 'left', col: 2 }], rooms: 2, areaM2: 66.2 },
 ];
 
+const DEMO_RELIEF_DEPTH_M = 0.8;
+
 const RESIDENTIAL_LEVELS = Array.from({ length: 13 }, (_, i) => i + 1);
 
 const round = (n: number, digits: number) => Math.round(n * 10 ** digits) / 10 ** digits;
@@ -83,6 +86,10 @@ export function buildDemoConfig(): WithEditor {
   const aspects = {} as Record<FacadeId, number>;
   for (const f of ['front', 'right', 'back', 'left'] as const) {
     facades[f] = { image: `assets/${f}.webp`, corners: corners(f) };
+    // Written by `npm run demo:depth` (needs a browser that can download the depth model).
+    if (existsSync(new URL(`../public/demo/assets/${f}-relief.png`, import.meta.url))) {
+      facades[f].relief = { image: `assets/${f}-relief.png`, depthM: DEMO_RELIEF_DEPTH_M };
+    }
     aspects[f] = quadAspect(facades[f].corners, IMAGE);
   }
   const { dimensions } = deriveDimensions(height, aspects);

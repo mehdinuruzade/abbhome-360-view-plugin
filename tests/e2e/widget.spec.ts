@@ -271,3 +271,56 @@ test.describe('live data from the host', () => {
     await expect.poll(() => page.evaluate(() => (window as unknown as { wheels: number }).wheels)).toBeGreaterThan(0);
   });
 });
+
+test.describe('depth and the plain view', () => {
+  test.skip(({ isMobile }) => isMobile, 'same code path on every viewport');
+
+  test('the legend switch hides the status colours, and the attribute sets the start', async ({ page }) => {
+    await page.goto('demo/index.html');
+    await waitReady(page);
+    const sw = widget(page).locator('.switch');
+    await expect(sw).toHaveAttribute('aria-checked', 'true');
+    await sw.click();
+    await expect(sw).toHaveAttribute('aria-checked', 'false');
+    await expect(widget(page).locator('.statuses')).toHaveClass(/off/);
+    // Buyers' toggling is private to the widget: no events for the host.
+    expect((await events(page)).map((e) => e.type)).toEqual(['ready']);
+
+    await page.evaluate(() => document.querySelector('abb-building-360')?.setAttribute('availability', 'hidden'));
+    await page.evaluate(() => document.querySelector('abb-building-360')?.setAttribute('availability', 'shown'));
+    await expect(sw).toHaveAttribute('aria-checked', 'true');
+  });
+
+  test('walls with relief still open and select apartments', async ({ page, isMobile }) => {
+    await page.goto('demo/index.html');
+    await waitReady(page);
+    await page.evaluate(() => {
+      const el = document.querySelector('abb-building-360');
+      if (!el?.building) return;
+      const cfg = structuredClone(el.building);
+      for (const f of ['front', 'right', 'back', 'left'] as const) {
+        const c = document.createElement('canvas');
+        c.width = 64;
+        c.height = 96;
+        const ctx = c.getContext('2d');
+        if (!ctx) continue;
+        const g = ctx.createLinearGradient(0, 0, 64, 0);
+        g.addColorStop(0, '#808080');
+        g.addColorStop(0.5, '#ffffff');
+        g.addColorStop(1, '#808080');
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, 64, 96);
+        cfg.facades[f].relief = { image: c.toDataURL('image/png'), depthM: 0.8 };
+      }
+      el.config = cfg;
+    });
+    await page.waitForFunction(
+      () => (window as unknown as { hostEvents: HostEvent[] }).hostEvents.filter((e) => e.type === 'ready').length === 2,
+    );
+    const pos = await aimAt(page, 'apt-1203');
+    await tap(page, pos.x, pos.y, isMobile);
+    await expect(widget(page).locator('.panel h2')).toHaveText('Apartment 1203');
+    await widget(page).locator('.panel').getByRole('button', { name: 'Select apartment' }).click();
+    expect((await events(page)).filter((e) => e.type === 'apartment-select').map((e) => e.detail?.apartmentId)).toEqual(['apt-1203']);
+  });
+});

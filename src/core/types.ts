@@ -27,10 +27,21 @@ export interface Dimensions {
   [key: string]: unknown;
 }
 
+/**
+ * Optional depth for a wall: a grayscale image in facade space (128 = wall plane, white sticks
+ * out by `depthM` metres, black goes in by it). Usually a data URL made by the editor.
+ */
+export interface Relief {
+  image: string;
+  depthM: number;
+  [key: string]: unknown;
+}
+
 export interface FacadeConfig {
   /** Image URL; relative URLs resolve against the config's own URL. Empty = plain wall. */
   image: string;
   corners: Corners;
+  relief?: Relief;
   [key: string]: unknown;
 }
 

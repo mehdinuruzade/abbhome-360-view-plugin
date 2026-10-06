@@ -141,3 +141,23 @@ describe('parseConfig', () => {
     expect(resolveUrl('plans/a.svg', 'https://x.test/a/b.json')).toBe('https://x.test/a/plans/a.svg');
   });
 });
+
+describe('relief', () => {
+  it('keeps a relief, resolves its image and clamps its depth', () => {
+    const raw = minimal();
+    (raw.facades.front as Record<string, unknown>).relief = { image: 'front-relief.png', depthM: 9, model: 'x' };
+    (raw.facades.back as Record<string, unknown>).relief = { image: 'data:image/png;base64,AAA' };
+    const { config, warnings } = parseConfig(raw, 'https://cdn.example.com/b/building.json');
+    expect(config.facades.front.relief).toEqual({ image: 'https://cdn.example.com/b/front-relief.png', depthM: 5, model: 'x' });
+    expect(config.facades.back.relief?.depthM).toBe(0.8);
+    expect(warnings.some((w) => w.includes('relief'))).toBe(false);
+  });
+
+  it('shows a wall flat when its relief is unusable', () => {
+    const raw = minimal();
+    (raw.facades.left as Record<string, unknown>).relief = { depthM: 1 };
+    const { config, warnings } = parseConfig(raw);
+    expect(config.facades.left.relief).toBeUndefined();
+    expect(warnings.some((w) => w.startsWith('facades.left.relief'))).toBe(true);
+  });
+});

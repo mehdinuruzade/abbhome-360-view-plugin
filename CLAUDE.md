@@ -6,7 +6,8 @@ Embeddable 3D building viewer for the ABB Home site, plus the editor that produc
 ## Stack (pinned)
 
 Vite 7, TypeScript 5.9 (strict), three 0.186 (vanilla, `WebGLRenderer`), Lit 3, Vitest 5,
-@playwright/test 1.56.1. No backend, no CSS framework. Ask before adding a runtime dependency:
+@playwright/test 1.56.1, onnxruntime-web 1.30 (editor only, lazy-loaded; never import it from
+`src/widget` or `src/scene`). No backend, no CSS framework. Ask before adding a runtime dependency:
 the IIFE bundle has a 200 kB gzip budget (`npm run size`).
 
 ## Commands
@@ -34,5 +35,10 @@ the committed `public/demo/building.json`).
 - **Playwright:** never `playwright install` in the cloud container (Chromium 141 is at
   /opt/pw-browsers and matches 1.56.1). WebGL needs `--use-angle=swiftshader --enable-unsafe-swiftshader`.
   Touch tests use raw CDP touch events; `Input.synthesizeScrollGesture` doesn't scroll in headless.
+- **Depth:** the editor runs Depth Anything V2 Small (`src/editor/depth-model.ts`); post-processing
+  is pure and tested (`src/core/depth.ts`). Hugging Face is unreachable from the cloud container, so
+  tests use `tests/fixtures/stand-in-depth.onnx` (same input/output names, mean brightness): it proves
+  the runtime path, never the quality. Don't commit its output as demo data; `npm run demo:depth`
+  must run where the real model downloads.
 - **Demo renders** in `public/demo/assets/` are the owner's, included with permission: don't
   reuse them elsewhere.

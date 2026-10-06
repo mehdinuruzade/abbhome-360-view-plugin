@@ -1,4 +1,4 @@
-import { Raycaster, Vector2, type Camera, type Object3D } from 'three';
+import { Raycaster, Vector2, type Camera, type Intersection, type Object3D } from 'three';
 
 export interface PointerPoint {
   x: number;
@@ -17,13 +17,15 @@ const SNAP_RINGS_PX = [8, 16];
 const SNAP_DIRECTIONS = 8;
 
 /**
- * Taps and mouse hover over apartment overlays. Uses pointer-down/up distance rather than the
- * click event, so finishing an orbit drag never selects anything.
+ * Taps and mouse hover over apartments: rays hit `targets`, and `resolve` turns a hit into an
+ * apartment. Uses pointer-down/up distance rather than the click event, so finishing an orbit
+ * drag never selects anything.
  */
 export function attachPicker(
   canvas: HTMLCanvasElement,
   camera: Camera,
   targets: () => Object3D[],
+  resolve: (hit: Intersection) => string | null,
   on: PickerHandlers,
 ): () => void {
   const raycaster = new Raycaster();
@@ -39,7 +41,7 @@ export function attachPicker(
     ndc.set(((x - rect.left) / rect.width) * 2 - 1, -((y - rect.top) / rect.height) * 2 + 1);
     raycaster.setFromCamera(ndc, camera);
     const hit = raycaster.intersectObjects(targets(), false)[0];
-    return (hit?.object.userData.apartmentId as string | undefined) ?? null;
+    return hit ? resolve(hit) : null;
   };
 
   const hitNear = (x: number, y: number): string | null => {

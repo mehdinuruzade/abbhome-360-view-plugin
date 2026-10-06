@@ -46,6 +46,8 @@ export class AbbBuilding360 extends LitElement {
     configUrl: { type: String, attribute: 'config-url', noAccessor: true },
     config: { attribute: false, noAccessor: true },
     locale: { type: String },
+    availability: { type: String },
+    _showAll: { state: true },
     selectable: { attribute: false },
     _building: { state: true },
     _selectedId: { state: true },
@@ -56,6 +58,9 @@ export class AbbBuilding360 extends LitElement {
   };
 
   declare locale: string;
+  /** `shown` (default) tints every apartment by status; `hidden` shows the plain building. */
+  declare availability: 'shown' | 'hidden';
+  declare protected _showAll: boolean;
   declare selectable: string[];
   declare protected _building: BuildingConfig | null;
   declare protected _selectedId: string | null;
@@ -81,6 +86,8 @@ export class AbbBuilding360 extends LitElement {
   constructor() {
     super();
     this.locale = 'en';
+    this.availability = 'shown';
+    this._showAll = true;
     this.selectable = ['available'];
     this._building = null;
     this._selectedId = null;
@@ -189,6 +196,12 @@ export class AbbBuilding360 extends LitElement {
   protected override updated(changed: PropertyValues): void {
     if (this.scene && (changed.has('configUrl') || changed.has('config'))) void this.loadBuilding();
     if (changed.has('_selectedId')) this.syncViewInset();
+    if (changed.has('_showAll')) this.scene?.setOverlayState({ showAll: this._showAll });
+  }
+
+  protected override willUpdate(changed: PropertyValues): void {
+    // The host's attribute sets the starting point; the buyer can flip it in the legend.
+    if (changed.has('availability')) this._showAll = this.availability !== 'hidden';
   }
 
   /** Keeps the building centred in the part of the view the details panel doesn't cover. */
@@ -272,7 +285,7 @@ export class AbbBuilding360 extends LitElement {
       scene.updateApartments(config.apartments);
       this._building = config;
       this._status = 'ready';
-      scene.setOverlayState({ selected: null, hover: null, visible: this.visibility() });
+      scene.setOverlayState({ selected: null, hover: null, visible: this.visibility(), showAll: this._showAll });
       this.hintTimer = window.setTimeout(this.hideHint, HINT_MS);
       this.emit<ReadyEventDetail>('ready', {
         buildingId: config.id,
@@ -395,12 +408,21 @@ export class AbbBuilding360 extends LitElement {
     const counts = new Map<string, number>();
     for (const a of this._building?.apartments ?? []) counts.set(a.status, (counts.get(a.status) ?? 0) + 1);
     return html`
-      <ul class="legend ${this._selectedId ? 'has-selection' : ''}" aria-label=${t(locale, 'legend')}>
+      <div class="legend ${this._selectedId ? 'has-selection' : ''}">
+      <button
+        type="button"
+        class="switch"
+        role="switch"
+        aria-checked=${this._showAll ? 'true' : 'false'}
+        @click=${() => (this._showAll = !this._showAll)}
+      ><span class="track"><span class="thumb"></span></span>${t(locale, 'showAvailability')}</button>
+      <ul class="statuses ${this._showAll ? '' : 'off'}" aria-label=${t(locale, 'legend')}>
         ${KNOWN_STATUSES.map(
           (s) => html`<li><span class="dot" style="--status:${STATUS_COLORS[s]}"></span>${t(locale, `status.${s}`)}
             <span class="count">${counts.get(s) ?? 0}</span></li>`,
         )}
       </ul>
+      </div>
     `;
   }
 
@@ -479,17 +501,68 @@ export class AbbBuilding360 extends LitElement {
       top: 12px;
       display: flex;
       flex-wrap: wrap;
-      gap: 6px 12px;
-      margin: 0;
+      align-items: center;
+      gap: 6px 14px;
       padding: 6px 10px;
-      list-style: none;
       border-radius: 8px;
       background: color-mix(in srgb, var(--abb360-surface) 88%, transparent);
       box-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
       font-size: 12px;
       pointer-events: none;
     }
-    .legend li {
+    .statuses {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 12px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .statuses.off {
+      opacity: 0.5;
+    }
+    .switch {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 2px 0;
+      border: 0;
+      background: none;
+      color: inherit;
+      font: inherit;
+      cursor: pointer;
+      pointer-events: auto;
+    }
+    .track {
+      position: relative;
+      width: 26px;
+      height: 14px;
+      border-radius: 7px;
+      background: rgb(0 0 0 / 0.2);
+      transition: background 0.15s;
+    }
+    .thumb {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #fff;
+      transition: transform 0.15s;
+    }
+    .switch[aria-checked='true'] .track {
+      background: var(--abb360-accent);
+    }
+    .switch[aria-checked='true'] .thumb {
+      transform: translateX(12px);
+    }
+    .switch:focus-visible {
+      outline: 2px solid var(--abb360-accent);
+      outline-offset: 2px;
+      border-radius: 4px;
+    }
+    .statuses li {
       display: flex;
       align-items: center;
       gap: 6px;

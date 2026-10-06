@@ -9,6 +9,9 @@ import './apartment-table';
 import type { ApartmentChangeDetail } from './apartment-table';
 import './corner-view';
 import type { CornersChangeDetail } from './corner-view';
+import type { DepthMap } from '../core/depth';
+import { DEFAULT_RELIEF_DEPTH_M } from '../core/parse-config';
+import { estimateRelief, reliefFromRaw } from './depth-step';
 import './facade-view';
 import {
   clearDraft,
@@ -37,11 +40,12 @@ import {
   type WithEditor,
 } from './state';
 
-type Step = 'photos' | 'corners' | 'size' | 'floors' | 'columns' | 'apartments' | 'details';
+type Step = 'photos' | 'corners' | 'depth' | 'size' | 'floors' | 'columns' | 'apartments' | 'details';
 
 const STEPS: { id: Step; label: string }[] = [
   { id: 'photos', label: 'Photos' },
   { id: 'corners', label: 'Corners' },
+  { id: 'depth', label: 'Depth' },
   { id: 'size', label: 'Size' },
   { id: 'floors', label: 'Floors' },
   { id: 'columns', label: 'Columns' },
@@ -94,6 +98,8 @@ export class AbbEditor extends LitElement {
     _warnings: { state: true },
     _invalidCorners: { state: true },
     _buyerPreview: { state: true },
+    _depthBusy: { state: true },
+    _smoothing: { state: true },
   };
 
   declare protected _doc: EditorDocument;
@@ -108,8 +114,12 @@ export class AbbEditor extends LitElement {
   declare protected _warnings: DimensionWarning[];
   declare protected _invalidCorners: boolean;
   declare protected _buyerPreview: boolean;
+  declare protected _depthBusy: boolean;
+  declare protected _smoothing: number;
 
   private scene: BuildingScene | null = null;
+  /** Model output per wall, kept so smoothing can change without rerunning the model. */
+  private rawDepth: Partial<Record<FacadeId, DepthMap>> = {};
   private previewFrame = 0;
   private saveTimer = 0;
 
@@ -128,6 +138,8 @@ export class AbbEditor extends LitElement {
     this._warnings = [];
     this._invalidCorners = false;
     this._buyerPreview = false;
+    this._depthBusy = false;
+    this._smoothing = 2;
     this.resetLevelRange();
   }
 
@@ -331,6 +343,10 @@ export class AbbEditor extends LitElement {
       return;
     }
     this.setCorners(f, corners);
+    if (this.config.facades[f].relief) {
+      delete this.rawDepth[f];
+      this._message = `The ${FACADE_LABEL[f].toLowerCase()} corners changed: estimate its depth again in step 3 so it lines up.`;
+    }
   }
 
   private setCorners(f: FacadeId, corners: Corners) {
@@ -373,6 +389,66 @@ export class AbbEditor extends LitElement {
     const storey = Number((this.renderRoot.querySelector('#storey-height') as HTMLInputElement | null)?.value);
     if (!(floors > 0) || !(storey > 0)) return;
     this.measure(floors * storey);
+  }
+
+  // ── Step 3: depth ─────────────────────────────────────────────────────────────────────────
+
+  private wallAspect(f: FacadeId): number {
+    return facadeWidth(f, this.config.dimensions) / this.config.dimensions.height;
+  }
+
+  private setRelief(f: FacadeId, relief: { image: string; depthM: number } | undefined) {
+    const facade = { ...this.config.facades[f] };
+    if (relief) facade.relief = relief;
+    else delete facade.relief;
+    this.setConfig({ ...this.config, facades: { ...this.config.facades, [f]: facade } });
+  }
+
+  private async estimateDepth(walls: FacadeId[]) {
+    const ready = walls.filter((f) => this._doc.images[f].src);
+    if (!ready.length) {
+      this._message = 'Add the photos first (step 1).';
+      return;
+    }
+    this._depthBusy = true;
+    try {
+      for (const [i, f] of ready.entries()) {
+        const label = `${FACADE_LABEL[f].toLowerCase()} (${i + 1}/${ready.length})`;
+        const { raw, dataUrl } = await estimateRelief(this._doc.images[f].src as string, this.config.facades[f].corners, this.wallAspect(f), {
+          smoothing: this._smoothing,
+          onProgress: ({ stage, fraction }) => {
+            this._message =
+              stage === 'download'
+                ? `Downloading the depth model${fraction !== undefined ? ` (${Math.round(fraction * 100)} %)` : ''}… only the first time.`
+                : stage === 'prepare'
+                  ? 'Preparing the depth model…'
+                  : `Estimating depth for the ${label}…`;
+          },
+        });
+        this.rawDepth[f] = raw;
+        this.setRelief(f, { image: dataUrl, depthM: this.config.facades[f].relief?.depthM ?? DEFAULT_RELIEF_DEPTH_M });
+      }
+      this._message = `Depth added to ${ready.length === 1 ? `the ${FACADE_LABEL[ready[0] as FacadeId].toLowerCase()}` : `${ready.length} walls`}. Adjust the strength and check the 3D preview.`;
+    } catch (e) {
+      this._message = `Couldn't estimate depth: ${e instanceof Error ? e.message : String(e)}. Check your connection and try again.`;
+    } finally {
+      this._depthBusy = false;
+    }
+  }
+
+  private setDepthStrength(f: FacadeId, e: Event) {
+    const relief = this.config.facades[f].relief;
+    const depthM = Number((e.target as HTMLInputElement).value);
+    if (relief && Number.isFinite(depthM)) this.setRelief(f, { ...relief, depthM });
+  }
+
+  private setSmoothing(e: Event) {
+    this._smoothing = Number((e.target as HTMLInputElement).value);
+    for (const f of FACADES) {
+      const raw = this.rawDepth[f];
+      const relief = this.config.facades[f].relief;
+      if (raw && relief) this.setRelief(f, { ...relief, image: reliefFromRaw(raw, this.wallAspect(f), this._smoothing) });
+    }
   }
 
   // ── Steps 4–6: floors, columns, apartments ───────────────────────────────────────────────
@@ -530,6 +606,8 @@ export class AbbEditor extends LitElement {
         return this.renderPhotos();
       case 'corners':
         return this.renderCorners();
+      case 'depth':
+        return this.renderDepth();
       case 'size':
         return this.renderSize();
       case 'floors':
@@ -591,10 +669,48 @@ export class AbbEditor extends LitElement {
     `;
   }
 
+  private renderDepth() {
+    const f = this._facade;
+    const relief = this.config.facades[f].relief;
+    const canResmooth = FACADES.some((g) => this.rawDepth[g] && this.config.facades[g].relief);
+    return html`
+      <h2>3. Depth</h2>
+      <p class="help">
+        Estimates depth from each photo, so balconies, slabs and recesses stand out in 3D and catch light and shadow.
+        It runs in this browser; the first time it downloads a 27 MB model. Depth from a single photo is approximate:
+        check the 3D preview and lower the strength if something looks wrong.
+      </p>
+      <div class="inline-form">
+        <button type="button" class="primary" ?disabled=${this._depthBusy} @click=${() => this.estimateDepth([...FACADES])}>Estimate all four walls</button>
+        <button type="button" ?disabled=${this._depthBusy} @click=${() => this.estimateDepth([f])}>Estimate this wall</button>
+        <label>Smoothing<input id="depth-smoothing" type="range" min="0" max="4" step="1" .value=${String(this._smoothing)}
+          ?disabled=${!canResmooth} title=${canResmooth ? '' : 'Estimate depth in this session to change smoothing'} @change=${this.setSmoothing} /></label>
+      </div>
+      ${this.renderFacadeTabs()}
+      <div class="depth-grid">
+        <figure>
+          ${this._doc.images[f].src ? html`<img src=${this._doc.images[f].src} alt=${`${FACADE_LABEL[f]} photo`} />` : html`<span>No photo</span>`}
+          <figcaption>Photo</figcaption>
+        </figure>
+        <figure>
+          ${relief ? html`<img class="relief" src=${relief.image} alt=${`${FACADE_LABEL[f]} depth`} />` : html`<span>No depth yet</span>`}
+          <figcaption>Depth: lighter sticks out, darker goes in</figcaption>
+        </figure>
+      </div>
+      ${relief
+        ? html`<div class="inline-form">
+            <label>Strength: ${relief.depthM.toFixed(1)} m<input id="depth-strength" type="range" min="0" max="3" step="0.1" .value=${String(relief.depthM)}
+              @input=${(e: Event) => this.setDepthStrength(f, e)} /></label>
+            <button type="button" @click=${() => this.setRelief(f, undefined)}>Remove depth from this wall</button>
+          </div>`
+        : nothing}
+    `;
+  }
+
   private renderSize() {
     const d = this.config.dimensions;
     return html`
-      <h2>3. Size</h2>
+      <h2>4. Size</h2>
       <p class="help">Enter the height. Width and depth come from the walls' proportions in the photos; correct them if you know better.</p>
       <div class="form-grid">
         <label>Height (m)<input id="height" type="number" min="1" step="0.1" .value=${String(d.height)} @change=${(e: Event) => this.setDimension('height', e)} /></label>
@@ -632,7 +748,7 @@ export class AbbEditor extends LitElement {
         'Click the columns of one stack (for a corner apartment, also the column on the next wall), pick the floors, then create. Click an existing apartment to delete it.',
     }[mode];
     return html`
-      <h2>${{ floors: '4. Floors', columns: '5. Columns', apartments: '6. Apartments' }[mode]}</h2>
+      <h2>${{ floors: '5. Floors', columns: '6. Columns', apartments: '7. Apartments' }[mode]}</h2>
       <p class="help">${help}</p>
       ${mode === 'floors'
         ? html`<div class="inline-form">
@@ -693,7 +809,7 @@ export class AbbEditor extends LitElement {
 
   private renderDetails() {
     return html`
-      <h2>7. Apartment details</h2>
+      <h2>8. Apartment details</h2>
       <p class="help">Rooms, area, price and status for each apartment. The host site can also push live status and prices to the widget.</p>
       <abb360-apartment-table
         .apartments=${this.config.apartments}
@@ -935,6 +1051,33 @@ export class AbbEditor extends LitElement {
       border-radius: 8px;
       background: #fff4e5;
       color: #8a4b00;
+    }
+    .depth-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin: 0 0 8px;
+    }
+    .depth-grid figure {
+      display: grid;
+      place-items: center;
+      gap: 6px;
+      margin: 0;
+      padding: 8px;
+      min-height: 160px;
+      border: 1px solid #dde2e7;
+      border-radius: 8px;
+      background: #f3f5f7;
+      color: #5b6673;
+      font-size: 12px;
+    }
+    .depth-grid img {
+      max-width: 100%;
+      max-height: 52vh;
+    }
+    .depth-grid img.relief {
+      image-rendering: auto;
+      aspect-ratio: auto;
     }
     abb360-facade-view {
       padding: 20px 0 0 34px;

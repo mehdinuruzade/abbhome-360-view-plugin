@@ -20,10 +20,12 @@
     "test:watch": "vitest",
     "e2e": "playwright test",
     "size": "node scripts/check-size.mjs",
-    "demo:config": "tsx scripts/make-demo-config.ts"
+    "demo:config": "tsx scripts/make-demo-config.ts",
+    "demo:depth": "node scripts/make-demo-depth.mjs"
   },
   "dependencies": {
     "lit": "3.3.3",
+    "onnxruntime-web": "1.30.0",
     "three": "0.186.1"
   },
   "devDependencies": {
