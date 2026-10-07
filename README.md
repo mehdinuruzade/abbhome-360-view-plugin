@@ -174,8 +174,11 @@ with `credentials: 'same-origin'`.
 
 Open `editor/index.html` (or the deployed site's `editor/`). Your work autosaves in the browser.
 
-1. **Photos.** One straight-on photo or render per wall, as a file or URL. Clean elevations work
-   best: anything in front of the building (a neighbour's roof, cars, trees) ends up painted on the wall.
+1. **Photos.** One straight-on photo or render per wall: **Choose a folder**, pick several files, drop
+   them (or the folder) anywhere on the editor, or give a file or URL per wall. Names containing front,
+   right, back or left, or starting with 1–4, go on that wall; the rest fill the free walls in name
+   order. Clean elevations work best: anything in front of the building (a neighbour's roof, cars,
+   trees) ends up painted on the wall. (iPhone and iPad can't pick folders; choose the files instead.)
 2. **Corners.** Drag the four handles onto the main wall's corners: the roof line and the ground. Use
    the same physical height on every wall so floors meet at the building's corners.
 3. **Depth.** **Add depth from the photos** works depth out of each straightened photo's structure,
@@ -203,7 +206,9 @@ Open `editor/index.html` (or the deployed site's `editor/`). Your work autosaves
 
 **Export JSON** downloads `building.json` (depth maps are embedded in it). Upload it with the
 photos (same names, same folder).
-**Import JSON** reopens it; pick the photos again if they were local files.
+**Open folder** (or dropping the folder) reopens an exported building with its photos, plans and
+depth images in one go. **Import JSON** reopens just the file; pick the photos again if they were local.
+Nothing is uploaded: folders and files are read in the browser.
 
 ## Development
 

@@ -1,4 +1,6 @@
-import { readFile } from 'node:fs/promises';
+import { copyFile, mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 
 type Config = {
@@ -262,4 +264,75 @@ test('shape: an L template, a dragged corner, a podium block, resize, export', a
   expect(corner[1]).toBe(9);
   expect(blocks[1]?.height).toBe(30);
   expect(Math.max(...(blocks[0]?.polygon.map((p) => p[0]) ?? []))).toBeCloseTo(exported.dimensions.width, 1);
+});
+
+test.describe('opening a folder', () => {
+  test.skip(({ isMobile }) => isMobile, 'the editor is a desktop tool');
+
+  test('a folder of photos goes on the walls by their names; other files are left out', async ({ page }) => {
+    const dir = await mkdtemp(join(tmpdir(), 'abb360-photos-'));
+    // Deliberately out of order on disk and by name: the wall words decide.
+    await copyFile('public/demo/assets/front.webp', join(dir, '3 Front.webp'));
+    await copyFile('public/demo/assets/right.webp', join(dir, 'right side.webp'));
+    await copyFile('public/demo/assets/back.webp', join(dir, '1 back.webp'));
+    await copyFile('public/demo/assets/left.webp', join(dir, 'LEFT.webp'));
+    await copyFile('public/demo/assets/front.webp', join(dir, 'cover.webp'));
+    await writeFile(join(dir, '.DS_Store'), 'x');
+    await writeFile(join(dir, 'notes.txt'), 'x');
+
+    await page.goto('editor/index.html');
+    const editor = page.locator('abb360-editor');
+    await editor.locator('section.work input[webkitdirectory]').setInputFiles(dir);
+    await expect(status(page)).toContainText('Photos added: front ← 3 Front.webp');
+    await expect(status(page)).toContainText('back ← 1 back.webp');
+    await expect(status(page)).toContainText('Not used: cover.webp.');
+    await expect(editor.locator('.photo .thumb img')).toHaveCount(4);
+    await expect(editor.locator('.photo .ref')).toHaveText(['3 Front.webp', 'right side.webp', '1 back.webp', 'LEFT.webp']);
+  });
+
+  test('an exported building folder opens with its photos, no picking again', async ({ page }) => {
+    page.on('dialog', (d) => void d.accept());
+    await page.goto('editor/index.html');
+    const editor = page.locator('abb360-editor');
+    await editor.getByRole('button', { name: 'Load demo' }).click();
+    await expect(status(page)).toContainText('Loaded the demo building');
+    const downloadPromise = page.waitForEvent('download');
+    await editor.getByRole('button', { name: 'Export JSON' }).click();
+    const json = await readFile((await (await downloadPromise).path()) as string, 'utf8');
+
+    // The folder as it would be uploaded: building.json next to its assets, inside a named folder.
+    const root = await mkdtemp(join(tmpdir(), 'abb360-export-'));
+    const dir = join(root, 'Demo residence');
+    await mkdir(join(dir, 'assets', 'plans'), { recursive: true });
+    await writeFile(join(dir, 'building.json'), json);
+    for (const f of ['front', 'right', 'back', 'left']) {
+      await copyFile(`public/demo/assets/${f}.webp`, join(dir, 'assets', `${f}.webp`));
+      await copyFile(`public/demo/assets/${f}-relief.png`, join(dir, 'assets', `${f}-relief.png`));
+    }
+    for (const plan of ['plan-2-room.svg', 'plan-3-room.svg']) {
+      await copyFile(`public/demo/assets/plans/${plan}`, join(dir, 'assets', 'plans', plan));
+    }
+
+    await editor.getByRole('button', { name: 'New' }).click();
+    await editor.locator('header input[webkitdirectory]').setInputFiles(dir);
+    await expect(status(page)).toContainText('Imported building.json.');
+    await expect(status(page)).not.toContainText('Pick the photos again');
+    await step(page, 'Photos');
+    await expect(editor.locator('.photo .thumb img')).toHaveCount(4);
+    await step(page, 'Details');
+    await expect(page.locator('abb360-apartment-table tbody tr')).toHaveCount(104);
+  });
+
+  test('photos dropped on the page go on the walls', async ({ page }) => {
+    await page.goto('editor/index.html');
+    await page.evaluate(async () => {
+      const dt = new DataTransfer();
+      for (const [name, f] of [['b-left.webp', 'left'], ['a-front.webp', 'front'], ['c-back.webp', 'back'], ['d-right.webp', 'right']]) {
+        const blob = await (await fetch(new URL(`../demo/assets/${f}.webp`, location.href))).blob();
+        dt.items.add(new File([blob], name as string, { type: 'image/webp' }));
+      }
+      document.querySelector('abb360-editor')?.dispatchEvent(new DragEvent('drop', { dataTransfer: dt, bubbles: true, cancelable: true }));
+    });
+    await expect(status(page)).toContainText('Photos added: front ← a-front.webp, right side ← d-right.webp, back ← c-back.webp, left side ← b-left.webp.');
+  });
 });

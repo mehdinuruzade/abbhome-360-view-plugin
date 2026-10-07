@@ -24,6 +24,7 @@ import {
   type EditorDocument,
   type ImageRef,
 } from './io';
+import { assignPhotos, baseName, droppedEntries, findConfig, isImage, pickedEntries, type FolderEntry } from './folder';
 import { loadImage, rectify } from './rectify';
 import {
   SHAPE_TEMPLATES,
@@ -117,6 +118,7 @@ export class AbbEditor extends LitElement {
     _smoothing: { state: true },
     _shapeSelection: { state: true },
     _shapePhotos: { state: true },
+    _dragging: { state: true },
   };
 
   declare protected _doc: EditorDocument;
@@ -136,6 +138,8 @@ export class AbbEditor extends LitElement {
   declare protected _shapeSelection: ShapeSelection | null;
   /** Straightened photos for the Shape step's top view. */
   declare protected _shapePhotos: Partial<Record<FacadeId, string | null>>;
+  /** Files are being dragged over the editor. */
+  declare protected _dragging: boolean;
 
   private scene: BuildingScene | null = null;
   /** What each wall's relief was made from, kept so smoothing can change without starting over. */
@@ -143,6 +147,11 @@ export class AbbEditor extends LitElement {
   private previewFrame = 0;
   private saveTimer = 0;
   private shapePhotoKeys: Partial<Record<FacadeId, string>> = {};
+  /**
+   * Other files of an opened folder (plan images, relief images), by their path in it, so the
+   * previews can show what building.json refers to.
+   */
+  private folderFiles = new Map<string, string>();
 
   constructor() {
     super();
@@ -163,6 +172,11 @@ export class AbbEditor extends LitElement {
     this._smoothing = 1;
     this._shapeSelection = null;
     this._shapePhotos = {};
+    this._dragging = false;
+    // Files dropped anywhere on the editor are opened, never navigated to.
+    this.addEventListener('dragover', (e) => this.onDragOver(e));
+    this.addEventListener('dragleave', (e) => this.onDragLeave(e));
+    this.addEventListener('drop', (e) => this.onDrop(e));
     this.resetLevelRange();
   }
 
@@ -183,22 +197,27 @@ export class AbbEditor extends LitElement {
   }
 
   /** Replaces the whole document, releasing the local photos of the old one. */
-  private replaceDoc(doc: EditorDocument) {
+  private replaceDoc(doc: EditorDocument, folderFiles = new Map<string, string>()) {
     for (const f of FACADES) {
       const old = this._doc.images[f].src;
       if (old && !FACADES.some((g) => doc.images[g].src === old)) revokeLocal(old);
     }
+    for (const url of this.folderFiles.values()) if (![...folderFiles.values()].includes(url)) revokeLocal(url);
+    this.folderFiles = folderFiles;
     this._doc = doc;
   }
 
   /** The config with displayable image sources, for the 3D preview and the buyer preview. */
   private previewConfig(): BuildingConfig {
     const base = this._doc.baseUrl ?? document.baseURI;
+    const local = (ref: string) => this.folderFiles.get(ref.replace(/^\.\//, '')) ?? resolveUrl(ref, base);
     const facades = { ...this.config.facades };
-    for (const f of FACADES) facades[f] = { ...facades[f], image: this._doc.images[f].src ?? '' };
-    const apartments = this.config.apartments.map((a) =>
-      a.planImage ? { ...a, planImage: resolveUrl(a.planImage, base) } : a,
-    );
+    for (const f of FACADES) {
+      const relief = facades[f].relief;
+      facades[f] = { ...facades[f], image: this._doc.images[f].src ?? '' };
+      if (relief) facades[f].relief = { ...relief, image: local(relief.image) };
+    }
+    const apartments = this.config.apartments.map((a) => (a.planImage ? { ...a, planImage: local(a.planImage) } : a));
     return { ...this.config, facades, apartments };
   }
 
@@ -295,20 +314,116 @@ export class AbbEditor extends LitElement {
     if (!file) return;
     try {
       const { doc, warnings } = importConfig(JSON.parse(await file.text()));
-      const missing = FACADES.filter((f) => doc.images[f].ref && !doc.images[f].src);
-      this.replaceDoc(doc);
-      this._pattern = doc.config.editor.numberPattern ?? '{floor}{nn}';
-      this._selection = [];
-      this._selectedApartment = null;
-      this.resetLevelRange(doc.config);
-      this._message =
-        `Imported ${file.name}.` +
-        (missing.length ? ` Pick the photos again in step 1 (${missing.map((f) => doc.images[f].ref).join(', ')}).` : '') +
-        (warnings.length ? ` ${warnings.length} problem(s) were fixed while reading it.` : '');
-      await this.fillImageSizes();
+      await this.adoptImported(doc, warnings, file.name);
     } catch {
       this._message = "That file isn't a building config this editor can read.";
     }
+  }
+
+  /** Shows an imported building; photos it names that the editor doesn't have are listed. */
+  private async adoptImported(doc: EditorDocument, warnings: string[], name: string, folderFiles?: Map<string, string>) {
+    const missing = FACADES.filter((f) => doc.images[f].ref && !doc.images[f].src);
+    this.replaceDoc(doc, folderFiles);
+    this._pattern = doc.config.editor.numberPattern ?? '{floor}{nn}';
+    this._selection = [];
+    this._selectedApartment = null;
+    this._shapeSelection = null;
+    this.rawDepth = {};
+    this.resetLevelRange(doc.config);
+    this._message =
+      `Imported ${name}.` +
+      (missing.length ? ` Pick the photos again in step 1 (${missing.map((f) => doc.images[f].ref).join(', ')}).` : '') +
+      (warnings.length ? ` ${warnings.length} problem(s) were fixed while reading it.` : '');
+    await this.fillImageSizes();
+  }
+
+  // ── Opening a folder (or several files, or a drop) ───────────────────────────────────────
+
+  private pickFolder(e: Event) {
+    const input = e.target as HTMLInputElement;
+    const entries = pickedEntries(input.files ?? []);
+    input.value = '';
+    void this.openEntries(entries, 'folder');
+  }
+
+  /**
+   * A folder with a building.json opens that building with its photos; otherwise its photos go on
+   * the walls (by the names front/right/back/left or 1–4, else in name order).
+   */
+  private async openEntries(entries: FolderEntry[], what: 'folder' | 'files') {
+    if (!entries.length) return;
+    const config = findConfig(entries);
+    if (config) {
+      await this.openBuildingFolder(config, entries);
+      return;
+    }
+    const images = entries.filter((e) => isImage(e.path, e.file.type));
+    if (!images.length) {
+      this._message = `${what === 'folder' ? 'That folder has' : 'Those files have'} no photos (jpg, png, webp, avif).`;
+      return;
+    }
+    const known: Partial<Record<FacadeId, string>> = {};
+    for (const f of FACADES) known[f] = this._doc.images[f].ref;
+    const { walls, skipped } = assignPhotos(images, known);
+    await Promise.all(
+      FACADES.map((f) => {
+        const e = walls[f];
+        return e ? this.useImage(f, e.path, URL.createObjectURL(e.file)) : undefined;
+      }),
+    );
+    const used = FACADES.filter((f) => walls[f]).map((f) => `${FACADE_LABEL[f].toLowerCase()} ← ${walls[f]?.path}`);
+    this._message =
+      `Photos added: ${used.join(', ')}.` +
+      (skipped.length ? ` Not used: ${skipped.map((e) => e.path).join(', ')}.` : '') +
+      ' Wrong wall? Choose that wall\'s file below.';
+  }
+
+  /** An exported building: its config, with the photos and other files it names from the same folder. */
+  private async openBuildingFolder(config: FolderEntry, entries: FolderEntry[]) {
+    let imported: ReturnType<typeof importConfig>;
+    try {
+      imported = importConfig(JSON.parse(await config.file.text()));
+    } catch {
+      this._message = `${config.path} isn't a building config this editor can read.`;
+      return;
+    }
+    if (this.config.apartments.length && !confirm(`Open ${config.path}? It replaces the building in the editor.`)) return;
+    // Paths in the config are relative to building.json, wherever it sits in the folder.
+    const dir = config.path.includes('/') ? config.path.slice(0, config.path.lastIndexOf('/') + 1) : '';
+    const files = new Map<string, string>();
+    for (const e of entries) {
+      if (!e.path.startsWith(dir) || e === config) continue;
+      files.set(e.path.slice(dir.length), URL.createObjectURL(e.file));
+    }
+    const { doc, warnings } = imported;
+    const images = { ...doc.images };
+    for (const f of FACADES) {
+      const ref = images[f].ref.replace(/^\.\//, '');
+      if (!ref || images[f].src) continue;
+      const path = files.has(ref) ? ref : [...files.keys()].find((p) => baseName(p) === baseName(ref));
+      const src = path ? files.get(path) : undefined;
+      if (src) images[f] = { ...images[f], src };
+    }
+    await this.adoptImported({ ...doc, images }, warnings, config.path, files);
+  }
+
+  private onDragOver(e: DragEvent) {
+    if (!e.dataTransfer?.types.includes('Files')) return;
+    e.preventDefault(); // allows the drop, and keeps the browser from opening the file instead
+    e.dataTransfer.dropEffect = 'copy';
+    this._dragging = true;
+  }
+
+  private onDragLeave(e: DragEvent) {
+    if (e.relatedTarget === null || !this.renderRoot.contains(e.relatedTarget as Node)) this._dragging = false;
+  }
+
+  private onDrop(e: DragEvent) {
+    if (!e.dataTransfer?.types.includes('Files')) return;
+    e.preventDefault();
+    this._dragging = false;
+    // Read the dropped items now: they are gone once the event has been handled.
+    void droppedEntries(e.dataTransfer).then((entries) => this.openEntries(entries, entries.some((x) => x.path.includes('/')) ? 'folder' : 'files'));
   }
 
   private exportJson() {
@@ -338,17 +453,12 @@ export class AbbEditor extends LitElement {
     if (file) void this.useImage(f, file.name, URL.createObjectURL(file));
   }
 
-  /** Several files at once: matched to walls by the names in an imported config, else in name order. */
+  /** Several files at once: matched to walls like a folder's photos (see openEntries). */
   private pickMany(e: Event) {
     const input = e.target as HTMLInputElement;
-    const files = [...(input.files ?? [])].sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+    const entries = pickedEntries(input.files ?? []);
     input.value = '';
-    const free = FACADES.filter((f) => !files.some((file) => file.name === this._doc.images[f].ref));
-    for (const file of files) {
-      const named = FACADES.find((f) => this._doc.images[f].ref === file.name);
-      const f = named ?? free.shift();
-      if (f) void this.useImage(f, file.name, URL.createObjectURL(file));
-    }
+    void this.openEntries(entries, 'files');
   }
 
   private useUrl(f: FacadeId, e: Event) {
@@ -706,6 +816,7 @@ export class AbbEditor extends LitElement {
           <button type="button" @click=${this.newBuilding}>New</button>
           <button type="button" @click=${this.loadDemo}>Load demo</button>
           <label class="button">Import JSON<input type="file" accept="application/json,.json" @change=${this.importJson} hidden /></label>
+          <label class="button">Open folder<input type="file" webkitdirectory multiple @change=${this.pickFolder} hidden /></label>
           <button type="button" @click=${this.exportJson}>Export JSON</button>
           <button type="button" class="primary" @click=${() => (this._buyerPreview = true)}>Preview as buyer</button>
         </div>
@@ -717,7 +828,7 @@ export class AbbEditor extends LitElement {
               @click=${() => (this._step = s.id)}><span>${i + 1}</span>${s.label}</button>`,
           )}
         </nav>
-        <section class="work">${this.renderStep()}</section>
+        <section class=${this._dragging ? 'work dropping' : 'work'}>${this.renderStep()}</section>
         <aside class="preview">
           <div class="preview-stage"></div>
           <p class="caption">Live 3D preview · drag to rotate</p>
@@ -763,9 +874,13 @@ export class AbbEditor extends LitElement {
       <h2>1. Photos of the four walls</h2>
       <p class="help">
         Straight-on (90°) photos or renders. Walk round the building: each next photo is the wall to the right of the last.
-        Photos stay in this browser until you export.
+        Choose a folder, pick several files, or drop them anywhere on this page. Names with front, right, back or left (or
+        starting 1–4) go on that wall; others go in name order. Photos stay in this browser until you export.
       </p>
-      <label class="button">Choose all four at once<input type="file" accept="image/*" multiple @change=${this.pickMany} hidden /></label>
+      <div class="inline-form">
+        <label class="button">Choose a folder<input type="file" webkitdirectory multiple @change=${this.pickFolder} hidden /></label>
+        <label class="button">Choose all four at once<input type="file" accept="image/*" multiple @change=${this.pickMany} hidden /></label>
+      </div>
       <div class="photo-grid">
         ${FACADES.map((f, i) => {
           const img = this._doc.images[f];
@@ -1218,6 +1333,11 @@ export class AbbEditor extends LitElement {
       gap: 4px;
       font-size: 13px;
       color: #5b6673;
+    }
+    .work.dropping {
+      outline: 3px dashed #1d6feb;
+      outline-offset: -6px;
+      background: #f2f7ff;
     }
     .inline-form {
       display: flex;
